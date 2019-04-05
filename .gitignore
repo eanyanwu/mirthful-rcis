@@ -1,4 +1,11 @@
 ################
+# SQLITE RELATED
+################
+
+# Database files ~ we don't want to version these
+*.db
+
+################
 # PYTHON RELATED
 ################
 
