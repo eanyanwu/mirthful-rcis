@@ -3,6 +3,12 @@
   "version": "1.0.0",
   "description": "RciV2 front-end",
   "main": "index.js",
+  "babel": {
+    "presets": [
+      "@babel/preset-env",
+      "@babel/preset-react"
+    ]
+  },
   "scripts": {
     "start": "webpack-dev-server --open",
     "build": "webpack"
@@ -20,5 +26,11 @@
     "webpack": "^4.29.6",
     "webpack-cli": "^3.3.0",
     "webpack-dev-server": "^3.2.1"
+  },
+  "dependencies": {
+    "axios": "^0.18.0",
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6",
+    "react-router-dom": "^5.0.0"
   }
 }
