@@ -19,4 +19,3 @@ def new(user_id, ttl_minutes=None):
         'created_at': now,
         'expires_at': now + timedelta(minutes=ttl_minutes)
     }
-

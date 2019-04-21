@@ -5,8 +5,11 @@ Version 2 of Gordon College's Online Rci System.
 ## Why a new version? 
 
 _Premise 1_: The first version of the online rci form was successful and well received.  
+
 _Premise 2_: The first version does not lend itself to maintainance or hand-off.[1]  
+
 _Premise 3_: Gordon College's residence life program will sooner or later find the current system to be insufficient and require an update.[2]
+
 
 _Conclusion_: A new version, which can be maintained by others, must be made.
 
