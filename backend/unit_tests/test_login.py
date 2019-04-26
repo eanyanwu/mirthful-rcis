@@ -1,5 +1,9 @@
-import rci_login as login
+import login
 
+import pytest
+from datetime import timedelta
+
+# Is Valid Login Tests 
 def test_no_user_record_is_provided():
     result = login.is_valid_login(None, 'username', 'password')
     assert result == False
@@ -47,4 +51,21 @@ def test_valid_login():
     assert result == True
 
     
+# Create Sesssion Obj Tests 
 
+def test_create_session_fails_when_user_id_is_None():
+    with pytest.raises(ValueError):
+        login.create_session_obj(None)
+
+def test_new_session_is_created_with_default_ttl_60_minutes():
+    new_session = login.create_session_obj(123)
+    ttl = new_session['expires_at'] - new_session['created_at']
+    assert ttl == timedelta(minutes=60)
+    assert new_session['user_id'] == 123
+
+def test_new_session_is_created_with_custom_ttl():
+    new_session = login.create_session_obj(123, 120)
+
+    ttl = new_session['expires_at'] - new_session['created_at']
+    assert ttl == timedelta(minutes=120)
+    assert new_session['user_id'] == 123

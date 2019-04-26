@@ -1,18 +1,18 @@
-import rci_datastore
+import datastore
 
 import uuid
 # Business Logic for Rci-related things
 
-DEFAULT_RCI_ACL = 'rw:rw:__'
+DEFAULT_RCI_ACL = 'o:rw;g:rw;g:__'
 
 
 def find_rci(rci_id):
-    if not rci_id:
-        raise ValueError('user_id is None')
+    if rci_id is None:
+        raise ValueError('rci_id is None')
 
-    rci = rci_datastore.get_rci(rci_id)
+    rci = rci_datastore.select_rci(rci_id)
 
-    if not rci:
+    if rci is None:
         # TODO: Return custom exception
         raise ValueError()
 
@@ -20,10 +20,10 @@ def find_rci(rci_id):
 
 
 def create_new_rci(user_id, room_id):
-    if not user_id:
+    if user_id is None:
         raise ValueError('user_id is None')
 
-    if not room_id:
+    if room_id is None:
         raise ValueError('room_id is None')
 
     rci_id = str(uuid.uuid4())

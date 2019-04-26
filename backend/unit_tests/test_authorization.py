@@ -1,6 +1,6 @@
 from authorization import parse_access_control
 from authorization import authorize
-from authorization import AuthorizationError
+from custom_exceptions import Unauthorized
 
 import pytest
 import uuid
@@ -26,7 +26,7 @@ def test_authorize_mode_is_none():
                   resource_acl_groups=[])
 
 def test_authorize_acs_is_none():
-    with pytest.raises(AuthorizationError, match='not publicly accessible'):
+    with pytest.raises(Unauthorized, match='not publicly accessible'):
         authorize(mode='r',
                   acs=None,
                   user_id=str(uuid.uuid4()),
@@ -62,7 +62,7 @@ def test_authorize_success_mode_rw_world_can_read_and_write():
               resource_acl_groups=[])
 
 def test_authorize_failure_mode_r_world_can_only_write():
-    with pytest.raises(AuthorizationError, match='sufficient permissions'):
+    with pytest.raises(Unauthorized, match='sufficient permissions'):
         authorize(mode='r',
                   acs='o:rw;g:rw;w:__',
                   user_id=str(uuid.uuid4()),
@@ -97,7 +97,7 @@ def test_authorize_mode_rw_group_can_read_and_write():
 
 
 def test_authorize_mode_rw_group_can_only_read():
-    with pytest.raises(AuthorizationError, match='sufficient permission'):
+    with pytest.raises(Unauthorized, match='sufficient permission'):
         authorize(mode='rw',
                   acs='o:__;g:r_;w:__',
                   user_id=str(uuid.uuid4()),
@@ -106,7 +106,7 @@ def test_authorize_mode_rw_group_can_only_read():
                   resource_acl_groups=['staff'])
 
 def test_authorize_mode_r_group_can_read_but_user_not_in_right_group():
-    with pytest.raises(AuthorizationError, match='sufficient permission'):
+    with pytest.raises(Unauthorized, match='sufficient permission'):
         authorize(mode='r',
                   acs='o:__;g:r_;w:__',
                   user_id=str(uuid.uuid4()),
@@ -148,7 +148,7 @@ def test_authorize_mode_rw_owner_can_read_and_write():
 def test_authorize_mode_r_owner_can_only_write():
     user_id = str(uuid.uuid4())
     
-    with pytest.raises(AuthorizationError, match='sufficient permissions'):
+    with pytest.raises(Unauthorized, match='sufficient permissions'):
         authorize(mode='r',
                   acs='o:_w;g:__;w:__',
                   user_id=user_id,
@@ -159,7 +159,7 @@ def test_authorize_mode_r_owner_can_only_write():
 def test_authorize_mode_r_owner_can_read_but_user_not_part_of_user_list():
     user_id = str(uuid.uuid4())
     
-    with pytest.raises(AuthorizationError, match='sufficient permissions'):
+    with pytest.raises(Unauthorized, match='sufficient permissions'):
         authorize(mode='r',
                   acs='o:rw;g:__;w:__',
                   user_id=user_id,

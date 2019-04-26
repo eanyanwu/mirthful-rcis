@@ -1,6 +1,9 @@
+from custom_exceptions import Unauthorized
+
 # This should always remain a 'pure' function, devoid of side-effects -- no
-# network calls, no database calls, no outside module calls.
-# Keeping it this way allows for easy to write tests
+# network calls, no database calls, no outside method calls
+# Keeping it this way allows for easy-to-write tests
+
 def authorize(mode,
               acs,
               user_id,
@@ -11,7 +14,7 @@ def authorize(mode,
     Determine if a user can access a certain resource.
 
     This method does not return any value if the authorization is succcessful.
-    If the authorization fails, `AuthorizationError` is raised
+    If the authorization fails, `Unauthorized` is raised
     """
 
     # Validate and throw
@@ -35,7 +38,7 @@ def authorize(mode,
 
     # Resource has no access_control -> No access
     if acs is None:
-        raise AuthorizationError('resource is not publicly accessible.')
+        raise Unauthorized('resource is not publicly accessible.')
 
     # 'ac' menas access control
     ac = parse_access_control(acs)
@@ -58,7 +61,7 @@ def authorize(mode,
 
     # If none of the above requirements have been satisfied, you don't have
     # access :/
-    raise AuthorizationError('you do not have sufficient permissions')
+    raise Unauthorized('you do not have sufficient permissions')
 
 
 def parse_access_control(acs):
@@ -113,20 +116,4 @@ def parse_access_control(acs):
         }
     except:
         raise ValueError('Invalid access control {}'.format(acs))
-
-    
-
-
-class AuthorizationError(Exception):
-    """
-    Authorization error raised by the authorize method
-    """
-
-    def __init__(self, reason):
-        self.reason = reason
-
-    def __str__(self):
-        return 'Authorization failed because {}'.format(self.reason)
-
-
 

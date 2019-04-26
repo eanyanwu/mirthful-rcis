@@ -8,6 +8,7 @@ DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS roles;
 DROP TABLE IF EXISTS role_assignments;
 DROP TABLE IF EXISTS rci_documents;
+DROP TABLE IF EXISTS rci_contents;
 
 DROP TABLE IF EXISTS user_acl_owners;
 DROP TABLE IF EXISTS user_acl_groups;
@@ -37,9 +38,9 @@ CREATE TABLE roles(
 );
 
 CREATE TABLE role_assignments(
-    role_assignment_id INTEGER PRIMARY KEY,
     user_id NOT NULL,
     role_id NOT NULL,
+    PRIMARY KEY (user_id, role_id),
     FOREIGN KEY(user_id) REFERENCES users(user_id),
     FOREIGN KEY(role_id) REFERENCES roles(role_id)
 );
@@ -47,8 +48,26 @@ CREATE TABLE role_assignments(
 CREATE TABLE rci_documents (
     rci_document_id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
+    created_at TEXT NOT NULL,
     access_control TEXT NOT NULL,
     FOREIGN KEY(user_id) REFERENCES users(user_id)
+);
+
+CREATE TABLE rci_contents (
+    rci_content_id TEXT PRIMARY KEY,
+    rci_document_id TEXT NOT NULL,
+    rci_content_type_id NOT NULL,
+    content TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY(rci_document_id) REFERENCES rci_documents(rci_document_id),
+    FOREIGN KEY(rci_content_type_id) REFERENCES rci_content_types(rci_content_type_id),
+    FOREIGN KEY(user_id) REFERENCES users(user_id)
+);
+
+CREATE TABLE rci_content_types (
+    rci_content_type_id TEXT PRIMARY KEY,
+    rci_content_type TEXT NOT NULL
 );
 
 CREATE TABLE user_acl_owners (

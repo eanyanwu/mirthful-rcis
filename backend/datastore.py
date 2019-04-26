@@ -1,8 +1,19 @@
 import sqlite3
 import os.path
 
-_database = None
+# Thread-safe globals. Thanks flask
+from flask import g
 
+DATABASE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                        'rci.db')
+
+def get_db():
+    db = getattr(g, '_database', None)
+    if db is None:
+        db = sqlite3.connect(DATABASE)
+        db.row_factory = dict_factory
+        g._database = db
+    return db
 
 class DbTransaction:
     """
@@ -19,42 +30,25 @@ class DbTransaction:
     When the context manager is existed, it executes the commit() method
     """
 
-    def __init__(self, connection_string=None, row_factory=None):
-        if not connection_string:
-            base_dir = os.path.dirname(os.path.abspath(__file__))
-            db_path = os.path.join(base_dir, 'rci.db')
-
-            connection_string = db_path 
-
-
-        if not row_factory:
-            row_factory = dict_factory
-
-        self.connection_string = connection_string
-        self.row_factory = row_factory
-        
-        global _database
-
-        if _database is None:
-            _database = sqlite3.connect(self.connection_string)
-            _database.row_factory = self.row_factory
+    def __init__(self):
+        pass
 
     def __enter__(self):
-        cursor = _database.cursor()
+        cursor = get_db().cursor()
 
         # Sqlite3 doesn't enable foreign keys by default.
         # See 2nd secion of the following link:
         # https://sqlite.org/foreignkeys.html
         cursor.execute('pragma foreign_keys = ON')
 
-        return _database.cursor()
+        return cursor 
 
     def __exit__(self, *args):
-        _database.commit()
+        get_db().commit()
 
 
 # Free form querying 
-def query(sql, sql_params):
+def query(sql, args=(), one=False):
     """
     Execute an SQL Query and returns the results.
 
@@ -62,13 +56,13 @@ def query(sql, sql_params):
     entire thing if it possible to limit the rows in some way.
     """
     with DbTransaction() as conn:
-        if not sql_params:
-            conn.execute(sql)
+        conn.execute(sql, args)
+        results = conn.fetchall()
+
+        if one:
+            return next(iter(results), None)
         else:
-            conn.execute(sql, sql_params)
-
-        return conn.fetchall()
-
+            return results
 
 def execute_script(sql_script):
     with DbTransaction() as conn:
@@ -104,11 +98,36 @@ def insert_session(session_id, user_id, created_at, expires_at):
                      'values (?,?,?,?);',
                      (session_id, user_id, created_at, expires_at))
 
-def insert_rci_document(rci_document_id, user_id, access_control):
+def insert_rci_document(rci_document_id,
+                        user_id,
+                        created_at,
+                        access_control):
     with DbTransaction() as conn:
         conn.execute('insert into rci_documents '
-                     'values (?,?,?);',
-                     (rci_document_id, user_id, access_control))
+                     'values (?,?,?,?);',
+                     (rci_document_id, user_id, created_at, access_control))
+
+def insert_rci_content(rci_content_id,
+                       rci_document_id,
+                       rci_content_type_id,
+                       content,
+                       user_id,
+                       created_at):
+    with DbTransaction() as conn:
+        conn.execute('insert into rci_contents '
+                     'values (?,?,?,?,?,?);',
+                     (rci_content_id,
+                      rci_document_id,
+                      rci_content_type_id,
+                      content,
+                      user_id,
+                      created_at))
+
+def insert_rci_content_type(rci_content_type_id, rci_content_type):
+    with DbTransaction() as conn:
+        conn.execute('insert into rci_content_types '
+                     'values (?,?);',
+                     (rci_content_type_id, rci_content_type))
 
 def insert_user_acl_owner(user_id, acl_owner_id):
     with DbTransaction() as conn:
@@ -157,37 +176,102 @@ def insert_event_log():
     pass
 
 
-# Simple 1-record SELECT methods 
+
+# Convenience methods for statements that are used often
 # NAMING CONVENTION `def select_{singularized_table_name}`
 
-select_stmt = ('select *'
-               'from {0}'
-               'where {1} = ?'
+select_stmt = ('select * '
+               'from {0} '
+               'where {1} = ? '
                'limit 1')
+
 
 def select_user(user_id):
     with DbTransaction() as conn:
         conn.execute(select_stmt.format('users', 'user_id'),
                      (user_id,))
 
+        return conn.fetchone()
+
+
 def select_role(role_id):
     with DbTransaction() as conn:
         conn.execute(select_stmt.format('roles', 'role_id'),
                      (role_id,))
+
+        return conn.fetchone()
+
+def select_role_assignments(user_id):
+    with DbTransaction() as conn:
+        conn.execute('select * '
+                     'from role_assignments '
+                     'where user_id = ? ;',
+                     (user_id,))
+
+        return conn.fetchall()
+
 
 def select_session(session_id):
     with DbTransaction() as conn:
         conn.execute(select_stmt.format('sessions', 'session_id'),
                      (session_id,))
 
+        return conn.fetchone()
+
+
 def select_rci_document(rci_document_id):
     with DbTransaction() as conn:
         conn.execute(select_stmt.format('rci_documents', 'rci_document_id'),
                      (rci_document_id,))
+        return conn.fetchone()
+
+def select_rci_content(rci_content_id):
+    with DbTransaction() as conn:
+        conn.execute(select_stmt.format('rci_contents', 'rci_content_id'),
+                     (rci_content_id,))
+        return conn.fetchone()
+
+def select_rci_content_type(rci_content_type_id):
+    with DbTransaction() as conn:
+        conn.execute(select_stmt.format('rci_content_types',
+                                        'rci_content_type_id'),
+                     (rci_content_type_id))
+        return conn.fetchone()
+
+def select_rci_acl_owners(rci_id):
+    with DbTransaction() as conn:
+        conn.execute('select * '
+                     'from rci_document_acl_owners '
+                     'where rci_document_id = ? ;',
+                     (rci_id,))
+        return conn.fetchall()
+
+def select_rci_acl_groups(rci_id):
+    with DbTransaction() as conn:
+        conn.execute('select * '
+                     'from rci_document_acl_groups '
+                     'where rci_document_id = ? ;',
+                     (rci_id,))
+        return conn.fetchall()
 
 def select_event_log():
     pass
 
+
+# Simple 1-record delete statements
+delete_stmt = ('delete '
+               'from {0} '
+               'where {1} = ? ')
+
+def delete_user(user_id):
+    with DbTransaction() as conn:
+        conn.execute(delete_stmt.format('users', 'user_id'),
+                     (user_id,))
+
+def delete_rci_document(rci_document_id):
+    with DbTransaction() as conn:
+        conn.execute(delete_stmt.format('rci_documents', 'rci_document_id'),
+                     (rci_document_id,))
 
 # Sqlite's Row factory works well, however, I REALLY
 # want to return my records as plain dictionaries.

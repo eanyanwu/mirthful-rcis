@@ -1,5 +1,5 @@
-from rci_response_utils import create_error_response
-from rci_response_utils import create_json_response
+from app import create_error_response
+from app import create_json_response
 
 import json
 
