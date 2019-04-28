@@ -1,9 +1,115 @@
-from custom_exceptions import Unauthorized
+import datastore
+from custom_exceptions import Unauthorized, BadRequest
+
+from enum import Enum
+
+class Permission(Enum):
+    READ = 'r'
+    WRITE = 'w'
+    READWRITE = 'rw'
+
+class ProtectedResource(Enum):
+    RCI_DOCUMENT = 1
+    USER = 2
+    ROLE = 3
+
+# pr = ProtectedResource
+def get_pr_metadata(pr_type):
+    return {
+        ProtectedResource.RCI_DOCUMENT: {
+            'table': 'rci_documents',
+            'pk_column': 'rci_document_id',
+            'acl_owners_table': 'rci_document_acl_owners',
+            'acl_groups_table': 'rci_document_acl_groups'
+        },
+        ProtectedResource.USER: {
+            'table': 'users',
+            'pk_column': 'user_id',
+            'acl_owners_table': 'user_acl_owners',
+            'acl_groups_table': 'user_acl_groups'
+        },
+        ProtectedResource.ROLE: {
+            'table': 'roles',
+            'pk_column': 'role_id',
+            'acl_owners_table': 'role_acl_owners',
+            'acl_groups_table': 'role_acl_groups'
+        }
+    }.get(pr_type, None)
+
+
+def get_authorization_inputs(requested_permission,
+                             user_id,
+                             resource_type,
+                             resource_id):
+
+    if not isinstance(requested_permission, Permission):
+        raise ValueError('Requested permission not recognized: {}'
+                         .format(requested_permission))
+    
+    if not isinstance(resource_type, ProtectedResource):
+        raise ValueError('Resource type not recognized: {}'
+                         .format(resource_type))
+
+    meta = get_pr_metadata(resource_type)
+
+    if meta is None:
+        raise BadRequest('No such protected resource type {}'
+                         .format(resource_type))
+
+    user_roles = datastore.query('select r.role_id '
+                                 'from users as u '
+                                 'inner join role_assignments as r '
+                                 'on u.user_id = r.user_id '
+                                 'where u.user_id = ?',
+                                 (user_id,))
+
+    resource = datastore.query('select * '
+                               'from {table} '
+                               'where {pk_column}=? '
+                               'limit 1'.format(**meta),
+                               (resource_id,),
+                               one=True)
+
+    if resource is None:
+        raise BadRequest('Invalid id for resource {}: {}'
+                         .format(resource_type, resource_id))
+
+    resource_acl_owners = datastore.query('select acl_owner_id '
+                                          'from {acl_owners_table} '
+                                          'where {pk_column}=? '.format(**meta),
+                                          (resource_id,))
+
+    resource_acl_groups = datastore.query('select acl_group_id '
+                                          'from {acl_groups_table} '
+                                          'where {pk_column}=? '.format(**meta),
+                                          (resource_id,))
+  
+    # The authorization method only needs the ids 
+    user_roles = map(lambda x: x['role_id'],
+                     user_roles)
+
+    resource_acl_owners = map(lambda x: x['acl_owner_id'], 
+                              resource_acl_owners)
+
+    resource_acl_groups = map(lambda x: x['acl_group_id'],
+                              resource_acl_groups)
+    
+    authorization_inputs = {
+        'mode': requested_permission.value,
+        'acs': resource['access_control'],
+        'user_id': user_id,
+        'user_roles': user_roles, 
+        'resource_acl_owners': resource_acl_owners, 
+        'resource_acl_groups': resource_acl_groups 
+    }
+
+    print(requested_permission)
+
+    return (authorization_inputs, resource)
 
 # This should always remain a 'pure' function, devoid of side-effects -- no
 # network calls, no database calls, no outside method calls
 # Keeping it this way allows for easy-to-write tests
-
 def authorize(mode,
               acs,
               user_id,

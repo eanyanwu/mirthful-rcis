@@ -53,14 +53,26 @@ def user_factory():
     """
     def _make_user_record():
         user_id = str(uuid.uuid4())
-        datastore.insert_user(
-            user_id=user_id,
-            username='test_user_{}'.format(user_id),
-            salt='salt',
-            password='password',
-            access_control='o:rw;g:rw;w:__')
+        
+        insert_args = {
+            'user_id': user_id,
+            'username': 'test_user_{}'.format(user_id),
+            'salt': 'test_salt_{}'.format(user_id),
+            'password': 'test_password_{}'.format(user_id),
+            'access_control': 'o:rw;g:rw;w:__'
+        }
 
-        user = datastore.select_user(user_id=user_id)
+        datastore.query(
+            'insert into users '
+            'values(:user_id, :username, :salt, :password, :access_control) ',
+            insert_args)
+
+        user = datastore.query(
+            'select * '
+            'from users '
+            'where user_id = ? '
+            'limit 1;',
+            (user_id,), one=True)
 
         return user
 
