@@ -77,6 +77,21 @@ def post_rci_attachment(rci_id):
 
     return create_json_response(rci_attachment, 200)
 
+@app.route('/api/rci/<uuid:rci_id>/attachment/<uuid:rci_attachment_id>',
+           methods=['DELETE'])
+@auth.login_required
+def delete_rci_attachment(rci_id, rci_attachment_id):
+    """
+    Delete an rci attachment
+    """
+
+    user = g.get('user')
+
+    core.delete_rci_attachment(str(rci_id),
+                               str(rci_attachment_id), 
+                               user['user_id'])
+
+    return create_json_response({}, 200)
 
 ## Utility Methods 
 

@@ -21,6 +21,31 @@ def get_rci(rci_document_id, user_id):
     # TODO: Craft the full rci document with damages coments and whatnot
     return rci_document
 
+def post_rci(user_id):
+    """
+    Creates a new rci record and adds the user to the list of owners
+    """
+
+    args = {
+        'rci_document_id': str(uuid.uuid4()),
+        'user_id': user_id,
+        'acl_owner_id': user_id,
+        'created_at': datetime.utcnow().isoformat(),
+        'access_control': 'o:rw;g:rw;w:__'
+    }
+    
+    datastore.query(
+        'insert into rci_documents '
+        'values (:rci_document_id, :user_id, :created_at, :access_control);',
+        args)
+
+    datastore.query(
+        'insert into rci_document_acl_owners '
+        'values (NULL, :rci_document_id, :acl_owner_id);',
+        args)
+
+    return args
+
 def post_rci_attachment(rci_document_id, user_id, data):
     """
     Creates a new rci attachment
@@ -59,29 +84,20 @@ def post_rci_attachment(rci_document_id, user_id, data):
 
     return args
 
-
-def post_rci(user_id):
+def delete_rci_attachment(rci_document_id, rci_attachment_id, user_id):
     """
-    Creates a new rci record and adds the user to the list of owners
+    Deletes an rci attachment
     """
 
-    args = {
-        'rci_document_id': str(uuid.uuid4()),
-        'user_id': user_id,
-        'acl_owner_id': user_id,
-        'created_at': datetime.utcnow().isoformat(),
-        'access_control': 'o:rw;g:rw;w:__'
-    }
-    
-    datastore.query(
-        'insert into rci_documents '
-        'values (:rci_document_id, :user_id, :created_at, :access_control);',
-        args)
+    inputs, _ = get_authorization_inputs(
+        Permission.WRITE,
+        user_id,
+        ProtectedResource.RCI_DOCUMENT,
+        rci_document_id)
+
+    authorize(**inputs)
 
     datastore.query(
-        'insert into rci_document_acl_owners '
-        'values (NULL, :rci_document_id, :acl_owner_id);',
-        args)
-
-    return args
-
+        'delete from rci_attachments '
+        'where rci_attachment_id = ? ',
+        (rci_attachment_id,))
