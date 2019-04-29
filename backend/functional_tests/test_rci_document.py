@@ -1,14 +1,15 @@
-from functional_tests.utils import login_as, setup_user
+from functional_tests.utils import login_as, setup_user, setup_room
 
 import json
 
-def test_create_and_read_rci(client, user_factory):
+def test_create_and_read_rci(client, user_factory, room_factory):
     # Setup 
     user = setup_user(client, user_factory)
+    room = setup_room(client, room_factory)
     login_as(user, client)
 
     # Test 
-    response = client.post('/api/rci')
+    response = client.post('/api/rci', json={'room_id': room['room_id']})
 
     json_data = response.get_json()
 
@@ -25,14 +26,17 @@ def test_create_and_read_rci(client, user_factory):
     
     assert response.status_code == 200
     assert json_data['rci_document_id'] == rci_document_id
+    assert json_data['room_id'] == room['room_id']
+    assert json_data['user_id'] == user['user_id']
 
 
-def test_add_attachment(client, user_factory):
+def test_add_attachment(client, user_factory, room_factory):
     # Setup 
     user = setup_user(client, user_factory)
+    room = setup_room(client, room_factory)
     login_as(user, client)
 
-    response = client.post('/api/rci')
+    response = client.post('/api/rci', json={'room_id': room['room_id']})
 
     assert response.status_code == 200
     
@@ -55,12 +59,13 @@ def test_add_attachment(client, user_factory):
     assert response.status_code == 200
     assert json_data['rci_attachment_type'] == 'TEXT'
 
-def test_delete_attachment(client, user_factory):
+def test_delete_attachment(client, user_factory, room_factory):
     # Setup
     user = setup_user(client, user_factory)
+    room = setup_room(client, room_factory)
     login_as(user, client)
 
-    response = client.post('/api/rci')
+    response = client.post('/api/rci', json={'room_id': room['room_id']})
 
     assert response.status_code == 200
 
@@ -86,12 +91,16 @@ def test_delete_attachment(client, user_factory):
 
 
     
-def test_try_add_attachment_by_unauthorized_user(client, user_factory):
+def test_add_attachment_by_unauthorized_user(client,
+                                             user_factory,
+                                             room_factory):
     user1 = setup_user(client, user_factory)
     user2 = setup_user(client, user_factory)
+    room = setup_room(client, room_factory)
 
     login_as(user1, client)
-    response = client.post('/api/rci')
+    response = client.post('/api/rci',
+                           json={'room_id': room['room_id']})
     assert response.status_code == 200
 
     rci_document_id = response.get_json()['rci_document_id']
@@ -109,17 +118,22 @@ def test_try_add_attachment_by_unauthorized_user(client, user_factory):
                            json=attachment)
 
     json_data = response.get_json()
-    print(json_data)
+
     assert response.status_code == 401
     assert 'you do not have sufficient permissions' in json_data['error_message'] 
     
-def test_try_delete_attachment_by_unauthorized_user(client, user_factory):
+def test_try_delete_attachment_by_unauthorized_user(client,
+                                                    user_factory,
+                                                    room_factory):
     # Setup
     user1 = setup_user(client, user_factory)
     user2 = setup_user(client, user_factory)
+    room = setup_room(client, room_factory)
 
     login_as(user1, client)
-    response = client.post('/api/rci')
+
+    response = client.post('/api/rci', json={'room_id': room['room_id']})
+
     rci_document_id = response.get_json()['rci_document_id']
 
     attachment = {
@@ -136,7 +150,3 @@ def test_try_delete_attachment_by_unauthorized_user(client, user_factory):
                              .format(rci_document_id, rci_attachment_id))
 
     assert response.status_code == 401
-
-    
-
-

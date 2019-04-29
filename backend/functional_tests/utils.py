@@ -18,3 +18,10 @@ def setup_user(client, user_factory):
     with client.application.app_context():
         return user_factory()
 
+def setup_room(client, room_factory):
+    """
+    Convenience mthod fo returning a room from the room factory
+    """
+    with client.application.app_context():
+        return room_factory()
+

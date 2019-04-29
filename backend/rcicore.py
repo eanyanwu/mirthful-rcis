@@ -21,7 +21,7 @@ def get_rci(rci_document_id, user_id):
     # TODO: Craft the full rci document with damages coments and whatnot
     return rci_document
 
-def post_rci(user_id):
+def post_rci(user_id, room_id):
     """
     Creates a new rci record and adds the user to the list of owners
     """
@@ -29,6 +29,7 @@ def post_rci(user_id):
     args = {
         'rci_document_id': str(uuid.uuid4()),
         'user_id': user_id,
+        'room_id': room_id,
         'acl_owner_id': user_id,
         'created_at': datetime.utcnow().isoformat(),
         'access_control': 'o:rw;g:rw;w:__'
@@ -36,7 +37,12 @@ def post_rci(user_id):
     
     datastore.query(
         'insert into rci_documents '
-        'values (:rci_document_id, :user_id, :created_at, :access_control);',
+        'values '
+        '(:rci_document_id, '
+        ':user_id, ' 
+        ':room_id, '
+        ':created_at, '
+        ':access_control);',
         args)
 
     datastore.query(

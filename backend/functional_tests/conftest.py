@@ -16,6 +16,7 @@ def client():
     # Get a test client
     # TODO: Learn more about what this does
     client = app.test_client()
+    client.testing = True
 
     # Create a temporary file that will be used
     # for our test db
@@ -42,14 +43,14 @@ def client():
     os.close(file_handle)
 
 
+
+# We are using a factory because we need the flask application context
+# To actually  interact with the database. This fixture doesn't have 
+# access to the context, but the tests that use them will
 @pytest.fixture
 def user_factory():
     """
     Fixture factory for creating and providing a test user
-
-    We are using a factory because we need the flask application context
-    To actually  interact with the database. This fixture doesn't have 
-    access to the context, but the tests that use it will
     """
     def _make_user_record():
         user_id = str(uuid.uuid4())
@@ -77,6 +78,35 @@ def user_factory():
         return user
 
     return _make_user_record
+
+@pytest.fixture
+def room_factory():
+    """
+    Fixture factory for creating and providing a test room
+    """
+    def _make_room_record():
+        room_id = str(uuid.uuid4())
+
+        insert_args = {
+            'room_id': room_id,
+            'room_name': 'test_room_{}'.format(room_id)
+        }
+
+        datastore.query(
+            'insert into rooms '
+            'values (:room_id, :room_name) ',
+            insert_args)
+
+        room  = datastore.query(
+            'select * '
+            'from rooms '
+            'where room_id = ? '
+            'limit 1;',
+            (room_id,), one=True)
+
+        return room
+
+    return _make_room_record
 
 
 

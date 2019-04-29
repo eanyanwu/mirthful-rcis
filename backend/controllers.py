@@ -4,6 +4,7 @@ from app import app
 from custom_exceptions import Unauthorized, BadRequest
 
 import json
+import uuid
 from flask import request
 from flask import g
 
@@ -38,7 +39,20 @@ def post_rci():
     """
     user = g.get('user')
 
-    new_rci = core.post_rci(user['user_id'])
+    payload = request.get_json()
+
+    room_id = payload.get('room_id', None)
+    
+    if room_id is None:
+        raise BadRequest('room_id is missing')
+
+    try:
+        uuid.UUID(room_id)
+    except Exception as e:
+        raise BadRequest('room_id is not a uuid')
+
+    new_rci = core.post_rci(user_id=user['user_id'],
+                            room_id=room_id)
 
     extra_headers = { 'Location': '/api/rci/' + new_rci['rci_document_id'] }
 
