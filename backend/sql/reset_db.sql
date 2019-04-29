@@ -53,11 +53,9 @@ CREATE TABLE role_assignments(
 
 CREATE TABLE rci_documents (
     rci_document_id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL,
     room_id TEXT NOT NULL,
     created_at TEXT NOT NULL,
     access_control TEXT NOT NULL,
-    FOREIGN KEY(user_id) REFERENCES users(user_id),
     FOREIGN KEY(room_id) REFERENCES rooms(room_id)
 );
 

@@ -28,23 +28,23 @@ def post_rci(user_id, room_id):
 
     args = {
         'rci_document_id': str(uuid.uuid4()),
-        'user_id': user_id,
         'room_id': room_id,
-        'acl_owner_id': user_id,
         'created_at': datetime.utcnow().isoformat(),
-        'access_control': 'o:rw;g:rw;w:__'
+        'access_control': 'o:rw;g:rw;w:__',
+        'acl_owner_id': user_id
     }
-    
+   
+    # Create the rci document
     datastore.query(
         'insert into rci_documents '
         'values '
         '(:rci_document_id, '
-        ':user_id, ' 
         ':room_id, '
         ':created_at, '
         ':access_control);',
         args)
-
+    
+    # Add the user as an owner for the document
     datastore.query(
         'insert into rci_document_acl_owners '
         'values (NULL, :rci_document_id, :acl_owner_id);',

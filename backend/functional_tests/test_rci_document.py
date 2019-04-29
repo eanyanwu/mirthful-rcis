@@ -14,7 +14,7 @@ def test_create_and_read_rci(client, user_factory, room_factory):
     json_data = response.get_json()
 
     assert response.status_code == 200
-    assert json_data['user_id'] == user['user_id'] 
+    assert json_data['room_id'] == room['room_id']
 
     # Since we are still logged in as the user
     # that created the rci, we should be able to read it
@@ -27,8 +27,6 @@ def test_create_and_read_rci(client, user_factory, room_factory):
     assert response.status_code == 200
     assert json_data['rci_document_id'] == rci_document_id
     assert json_data['room_id'] == room['room_id']
-    assert json_data['user_id'] == user['user_id']
-
 
 def test_add_attachment(client, user_factory, room_factory):
     # Setup 
