@@ -1,4 +1,6 @@
-from functional_tests.utils import login_as, setup_user
+from functional_tests.utils import login_as 
+
+import functools
 
 def test_unauthorized_login(client):
     fake_user = {
@@ -15,10 +17,9 @@ def test_unauthorized_login(client):
     assert headers.get('Set-Cookie', default=None) is None
 
 
-def test_authorized_login(client, user_factory):
-    # Setup
-    user = setup_user(client, user_factory)
-    response = login_as(user, client)
+def test_authorized_login(client, student):
+    # Test 
+    response = login_as(student, client)
 
     headers = response.headers
 

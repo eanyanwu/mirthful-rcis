@@ -1,68 +1,88 @@
 import datastore
-from authorization import Permission, ProtectedResource
-from authorization import authorize, get_authorization_inputs
+from authorization import Permission 
+from authorization import user_can
 from custom_exceptions import BadRequest
 
 import uuid
 from datetime import datetime, timedelta
 
-def get_rci(rci_document_id, user_id): 
+def get_rci(rci_id): 
     """
     Fetch a full rci document for the user
     """
-    inputs, rci_document = get_authorization_inputs(
-        Permission.READ,
-        user_id,
-        ProtectedResource.RCI_DOCUMENT,
-        rci_document_id)
 
-    authorize(**inputs)
+    rci = datastore.query(
+        'select * '
+        'from rcis '
+        'where rci_id = ?',
+        (rci_id,),
+        one=True)
+
+    if rci is None:
+        raise BadRequest('rci {} does not exist'.format(rci_id))
 
     # TODO: Craft the full rci document with damages coments and whatnot
-    return rci_document
+    return rci 
 
 def post_rci(user_id, room_id):
     """
-    Creates a new rci record and adds the user to the list of owners
-    """
+    Creates a new rci record for a room.
 
-    args = {
-        'rci_document_id': str(uuid.uuid4()),
+    The user who created it is added to the list of collaborators on 
+    this rci
+
+    Multiple rcis can exist for the same room
+    """
+    new_rci_id = str(uuid.uuid4())
+
+    # First check that the room exists
+    room = datastore.query(
+        'select * from rooms '
+        'where room_id = ? '
+        'limit 1', (room_id,), one=True)
+
+    if room is None:
+        raise BadRequest('room {} does not exist'.format(room_id))
+
+    rci_insert_args = {
+        'rci_id': new_rci_id, 
         'room_id': room_id,
         'created_at': datetime.utcnow().isoformat(),
-        'access_control': 'o:rw;g:rw;w:__',
-        'acl_owner_id': user_id
+    }
+
+    rci_collab_insert_args = {
+        'rci_collab_id': str(uuid.uuid4()),
+        'rci_id': new_rci_id, 
+        'user_id': user_id
     }
    
     # Create the rci document
     datastore.query(
-        'insert into rci_documents '
-        'values '
-        '(:rci_document_id, '
-        ':room_id, '
-        ':created_at, '
-        ':access_control);',
-        args)
+        'insert into rcis(rci_id, room_id, created_at) '
+        'values(:rci_id, :room_id, :created_at)',
+        rci_insert_args)
     
-    # Add the user as an owner for the document
+    # Add the user as an a collaborator for the rci
     datastore.query(
-        'insert into rci_document_acl_owners '
-        'values (NULL, :rci_document_id, :acl_owner_id);',
-        args)
+        'insert into rci_collabs(rci_collab_id, rci_id, user_id) '
+        'values(:rci_collab_id, :rci_id, :user_id);',
+        rci_collab_insert_args)
 
-    return args
+    # Fetch the newly created rci
+    new_rci = datastore.query(
+        'select * '
+        'from rcis '
+        'where rci_id=?',
+        (new_rci_id,),
+        one=True)
 
-def post_rci_attachment(rci_document_id, user_id, data):
+    return new_rci
+
+def post_damage(user, rci_id, text, image_url):
     """
-    Creates a new rci attachment
+    Record a damage on the rci 
     """
-    inputs, _  = get_authorization_inputs(
-        Permission.WRITE,
-        user_id,
-        ProtectedResource.RCI_DOCUMENT,
-        rci_document_id)
 
-    authorize(**inputs)
 
     attachment_type = data.get('rci_attachment_type', None)
 

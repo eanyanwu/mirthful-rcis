@@ -63,6 +63,13 @@ def query(sql, args=None, one=False):
         else:
             return results
 
+def executemany(*args, **kwargs):
+    """
+    Simple wrapper around the sqlite executemany method
+    """
+    with DbTransaction() as conn:
+        conn.executemany(*args, **kwargs)
+
 
 def execute_script(sql_script):
     """

@@ -9,6 +9,7 @@ from flask import request
 from flask import g
 
 # ROUTING 
+
 @app.route('/login', methods=['POST'])
 def login_user():
     """
@@ -16,6 +17,7 @@ def login_user():
 
     The session id is sent back in a cookie called `session`
     """
+
     username = request.form['username']
     password = request.form['password']
 
@@ -28,66 +30,55 @@ def login_user():
     else:
         raise Unauthorized('Bad Login')
 
-@app.route('/api/rci', methods=['POST'])
+@app.route('/api/room/<uuid:room_id>/rci', methods=['POST'])
 @auth.login_required
-def post_rci():
+def post_rci(room_id):
     """
-    Create an empty Rci Document
+    Create an empty Rci Document for a room
 
     No authorization is needed here because any logged in user should
     be able to do this
     """
     user = g.get('user')
-
-    payload = request.get_json()
-
-    room_id = payload.get('room_id', None)
     
-    if room_id is None:
-        raise BadRequest('room_id is missing')
-
-    try:
-        uuid.UUID(room_id)
-    except Exception as e:
-        raise BadRequest('room_id is not a uuid')
+    room_id = str(room_id)
 
     new_rci = core.post_rci(user_id=user['user_id'],
                             room_id=room_id)
 
-    extra_headers = { 'Location': '/api/rci/' + new_rci['rci_document_id'] }
-
-    return create_json_response(new_rci, 200, extra_headers) 
+    return create_json_response(new_rci, 200, {}) 
 
 @app.route('/api/rci/<uuid:rci_id>', methods=['GET'])
 @auth.login_required
 def get_rci(rci_id):
     """
-    Return an already existing Rci Document if the user has access to it
+    Return an existing rci
     """
-    user = g.get('user') 
 
-    rci_doc = core.get_rci(str(rci_id), user['user_id'])
+    rci = core.get_rci(str(rci_id))
     
-    return create_json_response(rci_doc, 200)
+    return create_json_response(rci, 200)
 
 @app.route('/api/rci/<uuid:rci_id>/attachment', methods=['POST'])
 @auth.login_required
-def post_rci_attachment(rci_id):
+def post_rci_damage(rci_id):
     """
-    Create a new attachment for the specified rci
-
-    User will have to have read access to the rci document
-    for this to work
+    Record a damage on the rci
     """
     user = g.get('user') 
-
+    rci_id = str(rci_id)
     data = request.get_json()
 
     if data is None:
-        # This means there was an error parsing it as json
         raise BadRequest('Malformed json {}'.format(request.data))
 
-    rci_attachment = core.post_rci_attachment(str(rci_id), user['user_id'], data)
+    text = data.get('text', None)
+    url = data.get('image_url', None)
+
+    if text is None:
+        raise BadRequest('damage text is None')
+
+    damage = core.post_damage(user, rci_id, text, url)
 
     return create_json_response(rci_attachment, 200)
 

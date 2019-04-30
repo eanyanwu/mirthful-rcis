@@ -1,4 +1,5 @@
 import datastore
+import controllers
 
 from app import app
 
@@ -26,75 +27,61 @@ def client():
     datastore.DATABASE = file_name 
    
     # Setup our tables
-    sql = ''
+    schema_sql = ''
+    bootstrap_sql = ''
+    
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    sql_file = os.path.join(base_dir, '../sql/reset_db.sql')
+    schema_sql_file = os.path.join(base_dir, '../sql/reset_db.sql')
+    test_data_sql_file = os.path.join(base_dir, '../sql/bootstrap_db.sql')
 
-    with open(sql_file, 'r') as f:
-        sql = f.read()
+    with open(schema_sql_file, 'r') as f:
+        schema_sql = f.read()
 
-    # To make any calls to the flask application we need a context
+    with open(test_data_sql_file, 'r') as f:
+        bootstrap_sql = f.read()
+
     with client.application.app_context():
-        datastore.execute_script(sql)
+        datastore.execute_script(schema_sql)
+        datastore.execute_script(bootstrap_sql)
 
     yield client
 
     # Clean up the temporary file
     os.close(file_handle)
 
-
-
-# We are using a factory because we need the flask application context
-# To actually  interact with the database. This fixture doesn't have 
-# access to the context, but the tests that use them will
 @pytest.fixture
-def user_factory():
+def student():
     """
-    Fixture factory for creating and providing a test user
+    Fixture for providing a student for the tests to use
     """
-    def _make_user_record():
-        user_id = str(uuid.uuid4())
-        
-        insert_args = {
-            'user_id': user_id,
-            'username': 'test_user_{}'.format(user_id),
-            'salt': 'test_salt_{}'.format(user_id),
-            'password': 'test_password_{}'.format(user_id),
-            'access_control': 'o:rw;g:rw;w:__'
-        }
 
-        datastore.query(
-            'insert into users '
-            'values(:user_id, :username, :salt, :password, :access_control) ',
-            insert_args)
+    test_client = app.test_client()
 
-        user = datastore.query(
-            'select * '
-            'from users '
-            'where user_id = ? '
-            'limit 1;',
-            (user_id,), one=True)
+    with test_client.application.app_context():
+        student = create_user('student')
 
-        return user
-
-    return _make_user_record
+    return student
 
 @pytest.fixture
-def room_factory():
+def room():
     """
-    Fixture factory for creating and providing a test room
+    Fixture for providing a room for the tests to use
     """
-    def _make_room_record():
+
+    test_client = app.test_client()
+
+    with test_client.application.app_context():
         room_id = str(uuid.uuid4())
 
         insert_args = {
             'room_id': room_id,
-            'room_name': 'test_room_{}'.format(room_id)
+            'room': 'room_number_{}'.format(room_id),
+            'building': 'Nyland'
         }
 
         datastore.query(
-            'insert into rooms '
-            'values (:room_id, :room_name) ',
+            'insert into rooms(room_id, room, building) '
+            'values (:room_id, :room, :building) ',
             insert_args)
 
         room  = datastore.query(
@@ -106,12 +93,29 @@ def room_factory():
 
         return room
 
-    return _make_room_record
 
+def create_user(role):
+    user_id = str(uuid.uuid4())
+    
+    insert_args = {
+        'user_id': user_id,
+        'username': 'test_user_{}'.format(user_id),
+        'salt': 'test_salt_{}'.format(user_id),
+        'password': 'test_password_{}'.format(user_id),
+        'role': role 
+    }
 
+    datastore.query(
+        'insert into users(user_id, username, salt, password, role) '
+        'values(:user_id, :username, :salt, :password, :role) ',
+        insert_args)
 
+    user = datastore.query(
+        'select * '
+        'from users '
+        'where user_id = ? '
+        'limit 1;',
+        (user_id,), one=True)
 
-
-
-
+    return user
 
