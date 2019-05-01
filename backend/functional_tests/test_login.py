@@ -1,13 +1,13 @@
-from functional_tests.utils import login_as 
-
 import functools
+import pytest
 
-def test_unauthorized_login(client):
+@pytest.mark.usefixtures('test_db')
+def test_unauthorized_login(flask_client):
     fake_user = {
         'username': 'hacker',
         'password': 'pass'
     }
-    response = login_as(fake_user, client)
+    response = flask_client.login_as(fake_user)
 
     json_data = response.get_json()
     headers = response.headers
@@ -16,10 +16,10 @@ def test_unauthorized_login(client):
     assert "hacker doesn't exist" in json_data['error_message'] 
     assert headers.get('Set-Cookie', default=None) is None
 
-
-def test_authorized_login(client, student):
+@pytest.mark.usefixtures('test_db')
+def test_authorized_login(flask_client, student):
     # Test 
-    response = login_as(student, client)
+    response = flask_client.login_as(student)
 
     headers = response.headers
 

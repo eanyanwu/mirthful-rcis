@@ -1,5 +1,4 @@
 import datastore
-import controllers
 
 from app import app
 
@@ -10,23 +9,24 @@ import uuid
 import tempfile
 
 @pytest.fixture
-def client():
+def test_db():
     """
-    Fixture for providing a test client for the tests to use
-    """
-    # Get a test client
-    # TODO: Learn more about what this does
-    client = app.test_client()
-    client.testing = True
+    Fixture for providing a test database for tests to use
 
+    This is done by creating a tempfile and using that as the connection
+    string for `datastore.DATABASE` (essentially setting a global variable)
+
+    Any time a Dbtransaction is created, it will use the given temporary file
+    as its database
+    """
     # Create a temporary file that will be used
     # for our test db
     file_handle, file_name = tempfile.mkstemp()
 
     # Set the database name
     datastore.DATABASE = file_name 
-   
-    # Setup our tables
+
+    # Setup our tables 
     schema_sql = ''
     bootstrap_sql = ''
     
@@ -40,61 +40,120 @@ def client():
     with open(test_data_sql_file, 'r') as f:
         bootstrap_sql = f.read()
 
-    with client.application.app_context():
-        datastore.execute_script(schema_sql)
-        datastore.execute_script(bootstrap_sql)
+    # Populate the tables
+    conn = sqlite3.connect(file_name)
+    conn.row_factory = datastore.dict_factory
 
-    yield client
+    conn.executescript(schema_sql)
+    conn.executescript(bootstrap_sql)
+
+    conn.commit()
+
+    # Give up control -- at this point, the test db is ready
+    yield conn
 
     # Clean up the temporary file
     os.close(file_handle)
+    
+
 
 @pytest.fixture
-def student():
+def flask_client():
+    """
+    Fixture for providing a test client for the tests to use
+    """
+    # Get a test client
+    client = app.test_client()
+
+    client.testing = True
+
+    # We also define a convenience method `login_as` on
+    # this client.
+    def login_as(user):
+        response = client.post(
+            '/login',
+            data={
+                'username': user['username'],
+                'password': user['password']
+            })
+
+        return response
+
+    client.login_as = login_as
+
+    yield client
+
+@pytest.fixture
+def student(test_db):
     """
     Fixture for providing a student for the tests to use
     """
-
-    test_client = app.test_client()
-
-    with test_client.application.app_context():
-        student = create_user('student')
-
-    return student
+    return create_user_core('student', test_db)
 
 @pytest.fixture
-def room():
+def res_life_staff(test_db):
+    """
+    Fixture for providing a res_life_staff member for the tests to use
+    """
+    return create_user_core('res_life_staff', test_db)
+
+@pytest.fixture
+def user_factory(test_db):
+    """
+    Fixture factory for creating users
+
+    Useful if the test needs to create more than one user
+    """
+    def _make_user_record(role):
+        return create_user_core(role, test_db)
+
+    return _make_user_record 
+
+
+@pytest.fixture
+def room(test_db):
     """
     Fixture for providing a room for the tests to use
     """
-
-    test_client = app.test_client()
-
-    with test_client.application.app_context():
-        room_id = str(uuid.uuid4())
-
-        insert_args = {
-            'room_id': room_id,
-            'room': 'room_number_{}'.format(room_id),
-            'building': 'Nyland'
-        }
-
-        datastore.query(
-            'insert into rooms(room_id, room, building) '
-            'values (:room_id, :room, :building) ',
-            insert_args)
-
-        room  = datastore.query(
-            'select * '
-            'from rooms '
-            'where room_id = ? '
-            'limit 1;',
-            (room_id,), one=True)
-
-        return room
+    return create_room_core(test_db)
 
 
-def create_user(role):
+def create_room_core(db_connection):
+    """
+    Helper function for creating a room
+    """
+
+    room_id = str(uuid.uuid4())
+
+    insert_args = {
+        'room_id': room_id,
+        'room': 'room_number_{}'.format(room_id),
+        'building': 'Nyland'
+    }
+
+    db_connection.execute(
+        'insert into rooms(room_id, room, building) '
+        'values (:room_id, :room, :building) ',
+        insert_args)
+
+    db_connection.commit() # Don't forget to call commit
+
+    results = db_connection.execute(
+        'select * '
+        'from rooms '
+        'where room_id = ? '
+        'limit 1;',
+        (room_id,))
+
+    return results.fetchone()
+
+
+# Note that this is a raw sqlite3 db connection 
+# So you manually need to call commit
+def create_user_core(role, db_connection):
+    """
+    Helper function for creating a user 
+    """
     user_id = str(uuid.uuid4())
     
     insert_args = {
@@ -105,17 +164,18 @@ def create_user(role):
         'role': role 
     }
 
-    datastore.query(
+    db_connection.execute(
         'insert into users(user_id, username, salt, password, role) '
         'values(:user_id, :username, :salt, :password, :role) ',
         insert_args)
 
-    user = datastore.query(
+    db_connection.commit() # Don't forget to call commit
+
+    results = db_connection.execute(
         'select * '
         'from users '
         'where user_id = ? '
         'limit 1;',
-        (user_id,), one=True)
+        (user_id,))
 
-    return user
-
+    return results.fetchone() 

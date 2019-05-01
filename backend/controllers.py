@@ -59,9 +59,9 @@ def get_rci(rci_id):
     
     return create_json_response(rci, 200)
 
-@app.route('/api/rci/<uuid:rci_id>/attachment', methods=['POST'])
+@app.route('/api/rci/<uuid:rci_id>/damage', methods=['POST'])
 @auth.login_required
-def post_rci_damage(rci_id):
+def post_damage(rci_id):
     """
     Record a damage on the rci
     """
@@ -80,21 +80,20 @@ def post_rci_damage(rci_id):
 
     damage = core.post_damage(user, rci_id, text, url)
 
-    return create_json_response(rci_attachment, 200)
+    return create_json_response(damage, 200)
 
-@app.route('/api/rci/<uuid:rci_id>/attachment/<uuid:rci_attachment_id>',
-           methods=['DELETE'])
+@app.route('/api/rci/<uuid:rci_id>/damage/<uuid:damage_id>', methods=['DELETE'])
 @auth.login_required
-def delete_rci_attachment(rci_id, rci_attachment_id):
+def delete_damage(rci_id, damage_id):
     """
     Delete an rci attachment
     """
 
     user = g.get('user')
+    rci_id = str(rci_id)
+    damage_id = str(damage_id)
 
-    core.delete_rci_attachment(str(rci_id),
-                               str(rci_attachment_id), 
-                               user['user_id'])
+    core.delete_damage(rci_id, damage_id, user)
 
     return create_json_response({}, 200)
 

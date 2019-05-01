@@ -1,7 +1,7 @@
 import datastore
 from authorization import Permission 
 from authorization import user_can
-from custom_exceptions import BadRequest
+from custom_exceptions import BadRequest, Unauthorized
 
 import uuid
 from datetime import datetime, timedelta
@@ -83,47 +83,102 @@ def post_damage(user, rci_id, text, image_url):
     Record a damage on the rci 
     """
 
+    # Check that the rci exists
+    rci = datastore.query(
+        'select * from rcis where rci_id=?',(rci_id,),
+        one=True
+    )
 
-    attachment_type = data.get('rci_attachment_type', None)
+    if rci is None:
+        raise BadRequest('rci {} does not exist'.format(rci_id))
 
-    if attachment_type is None:
-        raise BadRequest('Invalid attachment type')
+    # Check that the user is one of the following
+    # (a) a collaborator on the rci OR
+    # (b) has Permission.MODERATE_DAMAGES
+    if (user_can(Permission.MODERATE_DAMAGES, user)):
+        pass
+    else:
+        rci_collaborators = datastore.query(
+            'select * '
+            'from rci_collabs as rc '
+            'left join rcis as r '
+            'on r.rci_id = rc.rci_id '
+            'where rc.rci_id = ?', (rci_id,))
 
-    content = data.get('content', None)
+        rci_collaborators = [
+            x['user_id'] 
+            for x in rci_collaborators
+        ]
 
-    if content is None:
-        raise BadRequest('No content was provided to attachment')
-    
-    args = {
-        'rci_attachment_id': str(uuid.uuid4()),
-        'rci_document_id': rci_document_id ,
-        'rci_attachment_type': attachment_type,
-        'content': str(content),
-        'user_id': user_id,
+        if user['user_id'] not in rci_collaborators:
+            raise Unauthorized('You cannot record damage on this rci.' 
+                               'Please ask to be added to the list of '
+                               'collaborators')
+
+
+    damage_insert_args = {
+        'damage_id': str(uuid.uuid4()),
+        'rci_id': rci_id,
+        'text': text,
+        'image_url': image_url,
+        'user_id': user['user_id'],
         'created_at': datetime.utcnow().isoformat()
     }
     
     datastore.query(
-        'insert into rci_attachments '
-        'values (:rci_attachment_id, :rci_document_id, :rci_attachment_type, :content, :user_id, :created_at) ',
-        args)
+        'insert into '
+        'damages(damage_id, rci_id, text, image_url, user_id, created_at) '
+        'values(:damage_id,:rci_id,:text,:image_url,:user_id,:created_at) ',
+        damage_insert_args)
 
-    return args
+    new_damage = datastore.query(
+        'select * '
+        'from damages '
+        'where damage_id = ?', 
+        (damage_insert_args['damage_id'],),
+        one=True)
 
-def delete_rci_attachment(rci_document_id, rci_attachment_id, user_id):
+    return new_damage 
+
+def delete_damage(rci_id, damage_id, user):
     """
-    Deletes an rci attachment
+    Delete a damage record
     """
 
-    inputs, _ = get_authorization_inputs(
-        Permission.WRITE,
-        user_id,
-        ProtectedResource.RCI_DOCUMENT,
-        rci_document_id)
+    # Check that the rci exists
+    rci = datastore.query(
+        'select * from rcis where rci_id=?',(rci_id,),
+        one=True
+    )
 
-    authorize(**inputs)
+    if rci is None:
+        raise BadRequest('rci {} does not exist'.format(rci_id))
+
+    # Check that the user is one of the following
+    # (a) a collaborator on the rci OR
+    # (b) has Permission.MODERATE_DAMAGES
+    if (user_can(Permission.MODERATE_DAMAGES, user)):
+        pass
+    else:
+        rci_collaborators = datastore.query(
+            'select * '
+            'from rci_collabs as rc '
+            'left join rcis as r '
+            'on r.rci_id = rc.rci_id '
+            'where rc.rci_id = ?', (rci_id,))
+
+        rci_collaborators = [
+            x['user_id'] 
+            for x in rci_collaborators
+        ]
+
+        if user['user_id'] not in rci_collaborators:
+            raise Unauthorized('You cannot delete damages from this rci.' 
+                               'Please ask to be added to the list of '
+                               'collaborators')
 
     datastore.query(
-        'delete from rci_attachments '
-        'where rci_attachment_id = ? ',
-        (rci_attachment_id,))
+        'delete from damages '
+        'where damage_id = ?',
+        (damage_id,))
+

@@ -18,7 +18,7 @@ def user_can(permissions, user):
 
 
 class Permission(IntEnum):
-    REVIEW_DAMAGES = 0b00000001
+    MODERATE_DAMAGES = 0b00000001
 
 
 

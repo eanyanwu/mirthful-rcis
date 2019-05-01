@@ -7,6 +7,7 @@ from flask import g
 
 app = Flask(__name__)
 
+import controllers
 
 # PRE/POST REQUEST HOOKS
 @app.teardown_appcontext

@@ -20,7 +20,7 @@ PRAGMA foreign_keys = ON;
 CREATE TABLE roles(
     role TEXT PRIMARY KEY,
     description TEXT,
-    permissions TEXT
+    permissions INTEGER
 );
 
 CREATE TABLE users (

@@ -1,37 +1,39 @@
-from functional_tests.utils import login_as 
-
 import uuid
 import json
+import pytest
 import functools 
 
-def test_try_read_nonexistent_rci(client, student):
-    login_as(student, client)
+# Use the test_db fixture for all tests
+pytestmark = pytest.mark.usefixtures('test_db')
+ 
+def test_try_read_nonexistent_rci(flask_client, student):
+    flask_client.login_as(student)
 
-    response = client.get('/api/rci/{}'.format(uuid.uuid4()))
+    response = flask_client.get('/api/rci/{}'.format(uuid.uuid4()))
 
     assert response.status_code == 400
     assert 'does not exist' in response.get_json()['error_message']
 
-def test_create_rci_for_non_existent_room(client, student):
+def test_try_create_rci_for_non_existent_room(flask_client, student):
     room_id = uuid.uuid4()
 
-    login_as(student, client)
+    flask_client.login_as(student)
 
     # Test
-    response = client.post('/api/room/{}/rci'.format(room_id))
+    response = flask_client.post('/api/room/{}/rci'.format(room_id))
 
     assert response.status_code == 400
     assert 'does not exist' in response.get_json()['error_message']
 
 
-def test_create_and_read_rci(client, student, room):
+def test_create_and_read_rci(flask_client, student, room):
     # Setup 
     room_id = room['room_id']
 
-    login_as(student, client)
+    flask_client.login_as(student)
 
     # Test 
-    response = client.post('/api/room/{}/rci'.format(room_id))
+    response = flask_client.post('/api/room/{}/rci'.format(room_id))
 
     json_data = response.get_json()
 
@@ -40,7 +42,7 @@ def test_create_and_read_rci(client, student, room):
 
     rci_id = json_data['rci_id']
 
-    response = client.get('/api/rci/{}'.format(rci_id))
+    response = flask_client.get('/api/rci/{}'.format(rci_id))
 
     json_data = response.get_json()
     
@@ -48,123 +50,121 @@ def test_create_and_read_rci(client, student, room):
     assert json_data['rci_id'] == rci_id 
     assert json_data['room_id'] == room_id 
 
-def skip_test_add_attachment(client, user_factory, room_factory):
-    # Setup 
-    user = setup_user(client, user_factory)
-    room = setup_room(client, room_factory)
-    login_as(user, client)
+def test_try_record_damage_without_text(flask_client, student, room):
+    room_id = room['room_id']
 
-    response = client.post('/api/rci', json={'room_id': room['room_id']})
+    flask_client.login_as(student)
 
-    assert response.status_code == 200
+    response = flask_client.post('/api/room/{}/rci'.format(room_id))
+
+    rci_id = response.get_json()['rci_id']
+
+    response = flask_client.post('/api/rci/{}/damage'.format(rci_id),
+                                 json={})
+
+    assert response.status_code == 400
+    assert 'damage text is None' in response.get_json()['error_message']
+
+def test_try_record_damage_on_non_existing_rci(flask_client, student, room):
+    room_id = room['room_id']
+    fake_rci_id = str(uuid.uuid4())
+
+    flask_client.login_as(student)
+
+    response = flask_client.post('/api/rci/{}/damage'.format(fake_rci_id),
+                                 json={
+                                     'text': 'Broken wall'
+                                 })
+
+    assert response.status_code == 400
+    assert 'does not exist' in response.get_json()['error_message']
+
+def test_add_damage_to_rci(flask_client, student, room):
+    room_id = room['room_id']
     
-    rci_document_id = response.get_json()['rci_document_id']
+    flask_client.login_as(student)
 
-    # Test
-    attachment = {
-        'rci_attachment_type': 'TEXT',
-        'content': {
-            'url' : 'http://example.com',
-            'text': 'A couple of scratches'
-        }
-    }
+    response = flask_client.post('/api/room/{}/rci'.format(room_id))
 
-    response = client.post('/api/rci/{}/attachment'.format(rci_document_id),
-                           json=attachment)
+    rci_id = response.get_json()['rci_id']
 
-    json_data = response.get_json()
-
-    assert response.status_code == 200
-    assert json_data['rci_attachment_type'] == 'TEXT'
-
-def skip_test_delete_attachment(client, user_factory, room_factory):
-    # Setup
-    user = setup_user(client, user_factory)
-    room = setup_room(client, room_factory)
-    login_as(user, client)
-
-    response = client.post('/api/rci', json={'room_id': room['room_id']})
+    response = flask_client.post('/api/rci/{}/damage'.format(rci_id),
+                                 json={
+                                     'text': 'Brokenk wall',
+                                     'image_url': 'http://example.com'
+                                 })
 
     assert response.status_code == 200
 
-    rci_document_id = response.get_json()['rci_document_id']
+def test_add_damage_to_rci_by_res_life_staff(flask_client,
+                                             student,
+                                             res_life_staff,
+                                             room):
+    room_id = room['room_id']
 
-    attachment = {
-        'rci_attachment_type': 'TEXT',
-        'content': {}
-    }
+    flask_client.login_as(student)
 
-    response = client.post('/api/rci/{}/attachment'.format(rci_document_id),
-                           json=attachment)
+    response = flask_client.post('/api/room/{}/rci'.format(room_id))
+
+    rci_id = response.get_json()['rci_id']
+
+    # Now login as a res_life_staff member and add damages
+    flask_client.login_as(res_life_staff)
+
+    response = flask_client.post('/api/rci/{}/damage'.format(rci_id),
+                                 json={
+                                     'text': 'You forgot this damage'
+                                 })
 
     assert response.status_code == 200
 
-    attachment_id = response.get_json()['rci_attachment_id']
-
-    # Test
-    response = client.delete('/api/rci/{}/attachment/{}'
-                             .format(rci_document_id, attachment_id))
-
-    assert response.status_code == 200
-
-
-    
-def skip_test_add_attachment_by_unauthorized_user(client,
+def test_try_add_damage_by_unauthorized_user(flask_client,
                                              user_factory,
-                                             room_factory):
-    user1 = setup_user(client, user_factory)
-    user2 = setup_user(client, user_factory)
-    room = setup_room(client, room_factory)
+                                             room):
+    room_id = room['room_id']
 
-    login_as(user1, client)
-    response = client.post('/api/rci',
-                           json={'room_id': room['room_id']})
+    # Create the original owner of the rci
+    student_1 = user_factory('student')
+
+    flask_client.login_as(student_1)
+
+    response = flask_client.post('/api/room/{}/rci'.format(room_id))
+
+    rci_id = response.get_json()['rci_id']
+
+    # Now login as the second user, a student who should
+    # not have access to this rci
+    student_2 = user_factory('student')
+    flask_client.login_as(student_2)
+
+    response = flask_client.post('/api/rci/{}/damage'.format(rci_id),
+                                 json={
+                                     'text': 'Broken bed'
+                                 })
+
+    assert response.status_code == 401
+    assert 'cannot record damage' in response.get_json()['error_message']
+
+def test_delete_damage(flask_client, student, room):
+    room_id = room['room_id']
+    
+    flask_client.login_as(student)
+
+    response = flask_client.post('/api/room/{}/rci'.format(room_id))
+
+    rci_id = response.get_json()['rci_id']
+
+    response = flask_client.post('/api/rci/{}/damage'.format(rci_id),
+                                 json={
+                                     'text': 'Brokenk wall',
+                                     'image_url': 'http://example.com'
+                                 })
+    print(response.data)
+    damage_id = response.get_json()['damage_id']
+
+    response = flask_client.delete('/api/rci/{}/damage/{}'
+                                   .format(rci_id, damage_id))
+
     assert response.status_code == 200
 
-    rci_document_id = response.get_json()['rci_document_id']
-
-    # Now login as user2 and try to add a damage to that rci
-    login_as(user2, client)
-    attachment = {
-        'rci_attachment_type': 'TEXT',
-        'content' : {
-            'details': 'This here is some content'
-        }
-    }
-
-    response = client.post('/api/rci/{}/attachment'.format(rci_document_id),
-                           json=attachment)
-
-    json_data = response.get_json()
-
-    assert response.status_code == 401
-    assert 'you do not have sufficient permissions' in json_data['error_message'] 
     
-def skip_test_try_delete_attachment_by_unauthorized_user(client,
-                                                    user_factory,
-                                                    room_factory):
-    # Setup
-    user1 = setup_user(client, user_factory)
-    user2 = setup_user(client, user_factory)
-    room = setup_room(client, room_factory)
-
-    login_as(user1, client)
-
-    response = client.post('/api/rci', json={'room_id': room['room_id']})
-
-    rci_document_id = response.get_json()['rci_document_id']
-
-    attachment = {
-        'rci_attachment_type': 'TEXT',
-        'content': {}
-    }
-    response = client.post('/api/rci/{}/attachment'.format(rci_document_id),
-                           json=attachment)
-    rci_attachment_id = response.get_json()['rci_attachment_id']
-
-    # Test
-    login_as(user2, client)
-    response = client.delete('/api/rci/{}/attachment/{}'
-                             .format(rci_document_id, rci_attachment_id))
-
-    assert response.status_code == 401

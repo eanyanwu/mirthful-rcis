@@ -35,11 +35,14 @@ def get_session_user(session_id):
     """
     Fetch the user that is associated with a session 
     """
-
-    user = datastore.query('select u.* '
+    
+    # Notice that we also load the user's roles
+    user = datastore.query('select u.*, r.* '
                            'from sessions as s '
                            'inner join users as u '
                            'on s.user_id = u.user_id '
+                           'inner join roles as r '
+                           'on u.role = r.role '
                            'where s.session_id = :session_id '
                            'limit 1; ',
                            { 'session_id': session_id },
