@@ -6,17 +6,37 @@ from custom_exceptions import BadRequest, Unauthorized
 import uuid
 from datetime import datetime, timedelta
 
+def find_rci(rci_id):
+    return datastore.query(
+        'select * from rcis '
+        'where rci_id = ? '
+        'limit 1',
+        (rci_id,),
+        one=True)
+
+def find_room(room_id):
+    return datastore.query(
+        'select * from rooms '
+        'where room_id = ? '
+        'limit 1',
+        (room_id,),
+        one=True)
+
+def get_rci_collaborators(rci_id):
+    return datastore.query(
+        'select * '
+        'from rci_collabs as rc '
+        'left join rcis as r '
+        'on r.rci_id = rc.rci_id '
+        'where rc.rci_id = ?',
+        (rci_id,))
+
+
 def get_rci(rci_id): 
     """
     Fetch a full rci document for the user
     """
-
-    rci = datastore.query(
-        'select * '
-        'from rcis '
-        'where rci_id = ?',
-        (rci_id,),
-        one=True)
+    rci = find_rci(rci_id)
 
     if rci is None:
         raise BadRequest('rci {} does not exist'.format(rci_id))
@@ -36,10 +56,7 @@ def post_rci(user_id, room_id):
     new_rci_id = str(uuid.uuid4())
 
     # First check that the room exists
-    room = datastore.query(
-        'select * from rooms '
-        'where room_id = ? '
-        'limit 1', (room_id,), one=True)
+    room = find_room(room_id)
 
     if room is None:
         raise BadRequest('room {} does not exist'.format(room_id))
@@ -78,19 +95,119 @@ def post_rci(user_id, room_id):
 
     return new_rci
 
+def lock_rci(rci_id, user):
+    """
+    Freeze an rci, preventing it from being modified
+    """
+
+    # First check if the rci exists
+    rci = find_rci(rci_id)
+
+    if rci is None:
+        raise BadRequest('rci {} does not exist'.format(rci_id))
+
+    # You can only lock an rci if 
+    # you have permission to MODERATE_RCIS
+    if not user_can(Permission.MODERATE_RCIS, user):
+        raise Unauthorized('you do not have sufficient permissions '
+                           'to lock this rci')
+
+    # Go ahead and lock it up
+    datastore.query(
+        'update rcis '
+        'set is_locked = 1 '
+        'where rci_id = ?',
+        (rci_id,))
+
+    rci = datastore.query(
+        'select * from rcis where rci_id = ?',
+        (rci_id,),
+        one=True
+    )
+
+    return rci
+
+
+def unlock_rci(rci_id, user):
+    """
+    Un-Freeze an rci, making it editable again 
+    """
+
+    # First check if the rci exists
+    rci = find_rci(rci_id)
+
+    if rci is None:
+        raise BadRequest('rci {} does not exist'.format(rci_id))
+
+    # You can only unlock an rci if 
+    # you have permission to MODERATE_RCIS
+    if not user_can(Permission.MODERATE_RCIS, user):
+        raise Unauthorized('you do not have sufficient permissions '
+                           'to unlock this rci')
+
+    # Go ahead and unlock it up
+    datastore.query(
+        'update rcis '
+        'set is_locked = 0 '
+        'where rci_id = ?',
+        (rci_id,))
+
+    rci = datastore.query(
+        'select * from rcis where rci_id = ?',
+        (rci_id,),
+        one=True
+    )
+
+    return rci
+
+
+def delete_rci(rci_id, user):
+    """
+    Delete an rci document
+    """
+
+    # First check that the rci exists
+    rci = find_rci(rci_id)
+
+    if rci is None:
+        raise BadRequest('rci {} does not exist'.format(rci_id))
+
+    # You can only delete an rci if one of the following
+    # (a) a collaborator on that rci OR
+    # (b) a user with permission to MODERATE_RCIS
+    if (user_can(Permission.MODERATE_RCIS, user)):
+        pass
+    else:
+        rci_collaborators = [
+            x['user_id'] 
+            for x in get_rci_collaborators(rci_id)
+        ]
+
+        if user['user_id'] not in rci_collaborators:
+            raise Unauthorized('You cannot delete this rci.' 
+                               'Please ask to be added to the list of '
+                               'collaborators')
+
+    datastore.query(
+        'delete from rcis '
+        'where rci_id = ?',
+        (rci_id,))
+
+
 def post_damage(user, rci_id, text, image_url):
     """
     Record a damage on the rci 
     """
 
     # Check that the rci exists
-    rci = datastore.query(
-        'select * from rcis where rci_id=?',(rci_id,),
-        one=True
-    )
+    rci = find_rci(rci_id)
 
     if rci is None:
         raise BadRequest('rci {} does not exist'.format(rci_id))
+
+    # Cannot record a damage if the rci is locked
+    if rci['is_locked']:
+        raise BadRequest('rci {} is locked'.format(rci_id))
 
     # Check that the user is one of the following
     # (a) a collaborator on the rci OR
@@ -98,16 +215,9 @@ def post_damage(user, rci_id, text, image_url):
     if (user_can(Permission.MODERATE_DAMAGES, user)):
         pass
     else:
-        rci_collaborators = datastore.query(
-            'select * '
-            'from rci_collabs as rc '
-            'left join rcis as r '
-            'on r.rci_id = rc.rci_id '
-            'where rc.rci_id = ?', (rci_id,))
-
         rci_collaborators = [
             x['user_id'] 
-            for x in rci_collaborators
+            for x in get_rci_collaborators(rci_id) 
         ]
 
         if user['user_id'] not in rci_collaborators:
@@ -146,13 +256,14 @@ def delete_damage(rci_id, damage_id, user):
     """
 
     # Check that the rci exists
-    rci = datastore.query(
-        'select * from rcis where rci_id=?',(rci_id,),
-        one=True
-    )
+    rci = find_rci(rci_id)
 
     if rci is None:
         raise BadRequest('rci {} does not exist'.format(rci_id))
+
+    # Cannot delete a damage if the rci is locked
+    if rci['is_locked']:
+        raise BadRequest('rci {} is locked'.format(rci_id))
 
     # Check that the user is one of the following
     # (a) a collaborator on the rci OR
@@ -160,16 +271,9 @@ def delete_damage(rci_id, damage_id, user):
     if (user_can(Permission.MODERATE_DAMAGES, user)):
         pass
     else:
-        rci_collaborators = datastore.query(
-            'select * '
-            'from rci_collabs as rc '
-            'left join rcis as r '
-            'on r.rci_id = rc.rci_id '
-            'where rc.rci_id = ?', (rci_id,))
-
         rci_collaborators = [
             x['user_id'] 
-            for x in rci_collaborators
+            for x in get_rci_collaborators(rci_id) 
         ]
 
         if user['user_id'] not in rci_collaborators:

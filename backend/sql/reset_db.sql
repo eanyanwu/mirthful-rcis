@@ -45,9 +45,9 @@ CREATE TABLE rcis (
     rci_id TEXT PRIMARY KEY,
     room_id TEXT NOT NULL,
     created_at TEXT NOT NULL,
-    is_locked INTEGER NOT NULl DEFAULT 0,
+    is_locked INTEGER NOT NULL DEFAULT 0,
 
-    FOREIGN KEY(room_id) REFERENCES rooms(room_id)
+    FOREIGN KEY(room_id) REFERENCES rooms(room_id) ON DELETE CASCADE
 );
 
 CREATE TABLE rci_collabs (
@@ -56,8 +56,8 @@ CREATE TABLE rci_collabs (
     user_id TEXT NOT NULL,
     
     UNIQUE (rci_id, user_id),
-    FOREIGN KEY(rci_id) REFERENCES rcis(rci_id),
-    FOREIGN KEY(user_id) REFERENCES users(user_id)
+    FOREIGN KEY(rci_id) REFERENCES rcis(rci_id) ON DELETE CASCADE,
+    FOREIGN KEY(user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
 CREATE TABLE damages (
@@ -68,8 +68,8 @@ CREATE TABLE damages (
     user_id TEXT NOT NULL,
     created_at TEXT NOT NULL,
 
-    FOREIGN KEY(rci_id) REFERENCES rcis(rci_id),
-    FOREIGN KEY(user_id) REFERENCES users(user_id)
+    FOREIGN KEY(rci_id) REFERENCES rcis(rci_id) ON DELETE CASCADE,
+    FOREIGN KEY(user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
 CREATE TABLE sessions (
@@ -78,5 +78,5 @@ CREATE TABLE sessions (
     created_at TEXT NOT NULL,
     expires_at TEXT NOT NULL,
 
-    FOREIGN KEY(user_id) REFERENCES users(user_id)
+    FOREIGN KEY(user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );

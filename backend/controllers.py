@@ -48,6 +48,45 @@ def post_rci(room_id):
 
     return create_json_response(new_rci, 200, {}) 
 
+@app.route('/api/rci/<uuid:rci_id>', methods=['DELETE'])
+@auth.login_required
+def delete_rci(rci_id):
+    """
+    Delete an rci document
+    """
+    user = g.get('user')
+    rci_id = str(rci_id)
+
+    core.delete_rci(rci_id, user)
+
+    return create_json_response(status_code=200)
+
+@app.route('/api/rci/<uuid:rci_id>/lock', methods=['POST'])
+@auth.login_required
+def lock_rci(rci_id):
+    """
+    Freeze and rci to prevent it from being modified further
+    """
+    user = g.get('user')
+    rci_id = str(rci_id)
+
+    rci = core.lock_rci(rci_id, user)
+
+    return create_json_response(data=rci, status_code=200)
+
+@app.route('/api/rci/<uuid:rci_id>/lock', methods=['DELETE'])
+@auth.login_required
+def unlock_rci(rci_id):
+    """
+    Unlock an rci -- allowing it to be modified
+    """
+    user = g.get('user')
+    rci_id = str(rci_id)
+
+    rci = core.unlock_rci(rci_id, user)
+
+    return create_json_response(data=rci, status_code=200)
+
 @app.route('/api/rci/<uuid:rci_id>', methods=['GET'])
 @auth.login_required
 def get_rci(rci_id):
