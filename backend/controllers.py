@@ -28,7 +28,11 @@ def login_user():
 
         extra_headers = { 'Set-Cookie': 'session={}'.format(session_id) }
 
-        return create_json_response({}, 200, extra_headers)
+        auth.load_logged_in_user(session_id)
+
+        user = g.get('user')
+
+        return create_json_response(user, 200, extra_headers)
     else:
         raise Unauthorized('Bad Login')
 

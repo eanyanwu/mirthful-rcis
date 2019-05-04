@@ -23,6 +23,9 @@ def test_authorized_login(flask_client, student):
 
     headers = response.headers
 
+    json = response.get_json()
+
     # assert that we got a `Set-Cookie` header
     assert headers.get('Set-Cookie', default=None) is not None
+    assert json['user_id'] == student['user_id']
 

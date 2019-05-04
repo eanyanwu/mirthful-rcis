@@ -6,17 +6,25 @@ loginForm.addEventListener('submit', onLoginSubmit);
 function onLoginSubmit(event) {
     event.preventDefault();
     var loginForm = event.currentTarget;
-    var username = loginForm.querySelector("input[name='username']").value;
-    var password = loginForm.querySelector("input[name='password']").value;
+    var userInput = loginForm.querySelector("input[name='username']");
+    var passInput = loginForm.querySelector("input[name='password']");
+    var output = loginForm.querySelector("output[name='login-error']");
 
-    console.log(username, password);
+    var username = userInput.value; 
+    var password = passInput.value; 
+
+    // Clear the result of potential previous login attempts
+    output.value = "";
 
     authentication.login(username, password,
         function(result) {
-            console.log('Success', result);
+            var dashboardName = result['role'] + "_dashboard.html";
+
+            window.location.href = dashboardName;
         },
         function(status, error) {
-            console.log(status, error);
+            var errorMessage = error['error_message'];
+            output.value = errorMessage;
         });
 }
 
