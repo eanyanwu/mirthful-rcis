@@ -17,9 +17,11 @@ def login_user():
 
     The session id is sent back in a cookie called `session`
     """
-
-    username = request.form['username']
-    password = request.form['password']
+    try :
+        username = request.form['username']
+        password = request.form['password']
+    except KeyError:
+        raise BadRequest('username or password missing')
 
     if auth.validate(username, password):
         session_id = auth.start_session(username)
