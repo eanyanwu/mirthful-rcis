@@ -28,7 +28,7 @@ var http = (function() {
                     }
                 }
             } else {
-                // do nothing
+                // Do nothing
             }
         } 
         catch (e) {
@@ -65,10 +65,18 @@ var http = (function() {
         };
 
         httpRequest.open('POST', url);
+    
+        // If contentType is defined
+        if (contentType) {
+            httpRequest.setRequestHeader('Content-Type', contentType);
+        }
 
-        httpRequest.setRequestHeader('Content-Type', contentType);
-
-        httpRequest.send(data);
+        // A post request doesn't always have to have data
+        if (data) {
+            httpRequest.send(data);
+        } else {
+            httpRequest.send();
+        }
     }
 
     function httpDelete(url, successCallback, errorCallback)

@@ -67,7 +67,7 @@ def flask_client():
 
     client.testing = True
 
-    # We also define a convenience method `login_as` on
+    # We also define convenience method `login_as` and `logout` on
     # this client.
     def login_as(user):
         response = client.post(
@@ -79,7 +79,13 @@ def flask_client():
 
         return response
 
+    def logout():
+        response = client.post('/logout')
+
+        return response
+
     client.login_as = login_as
+    client.logout = logout
 
     yield client
 

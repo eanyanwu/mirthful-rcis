@@ -36,6 +36,21 @@ def login_user():
     else:
         raise Unauthorized('Bad Login')
 
+@app.route('/logout', methods=['POST'])
+@auth.login_required
+def logout_user():
+    """
+    Logs a user out by:
+    1- Removing the corresponding session record from the database AND
+    2- Unsetting the session cookie 
+    """
+    session_id = request.cookies.get('session')
+
+    auth.end_session(session_id)
+
+    return create_json_response(data={}, status_code=200)
+    
+
 @app.route('/api/room/<uuid:room_id>/rci', methods=['POST'])
 @auth.login_required
 def post_rci(room_id):

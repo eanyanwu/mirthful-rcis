@@ -14,7 +14,7 @@ def login_required(func):
     def handle_authentication_check(*args, **kwargs):
         rci_session = request.cookies.get('session')
 
-        if not rci_session:
+        if rci_session is None:
             raise Unauthorized('Login required')
 
         # Add the usre to the flask context global so that downstream
@@ -49,7 +49,7 @@ def get_session_user(session_id):
                            one=True)
 
     if user is None:
-        raise BadRequest('Could not find user for session {}'
+        raise Unauthorized('No such session {}'
                          .format(session_id))
 
     return user
@@ -64,7 +64,7 @@ def validate(username, password):
                            one=True)
     
     if user is None:
-        raise Unauthorized("The user {} doesn't exist!".format(username))
+        raise Unauthorized("Bad login".format(username))
 
     return is_valid_login(user, username, password)
 
@@ -106,6 +106,16 @@ def start_session(username):
     
 
     return s['session_id']
+
+def end_session(session_id):
+    """
+    End a session 
+    """
+
+    datastore.query(
+        'delete from sessions '
+        'where session_id = ?',
+        (session_id,))
 
 def create_session_obj(user_id, ttl_minutes=None):
     if ttl_minutes is None:
