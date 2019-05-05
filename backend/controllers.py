@@ -124,6 +124,18 @@ def get_rci(rci_id):
     
     return create_json_response(rci, 200)
 
+@app.route('/api/user/<uuid:user_id>/rcis', methods=['GET'])
+@auth.login_required
+def get_user_rci(user_id):
+    """
+    Return all the rcis for which the specified user is a collaborator
+    """
+    user_id = str(user_id)
+
+    rcis = core.get_user_rcis(user_id)
+
+    return create_json_response(data=rcis, status_code=200)
+
 @app.route('/api/rci/<uuid:rci_id>/damage', methods=['POST'])
 @auth.login_required
 def post_damage(rci_id):

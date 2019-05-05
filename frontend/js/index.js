@@ -20,6 +20,11 @@ function onLoginSubmit(event) {
         function(result) {
             var dashboardName = result['role'] + "_dashboard.html";
 
+            // Temporary: Store the user_id in local storage
+            // Local storage is not alwasy available,
+            // so what i'm thinking of doing is storing this in a cookie.
+            window.localStorage.setItem('user_id', result['user_id']);
+
             window.location.href = dashboardName;
         },
         function(status, error) {

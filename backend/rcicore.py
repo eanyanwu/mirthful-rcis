@@ -22,6 +22,14 @@ def find_room(room_id):
         (room_id,),
         one=True)
 
+def find_user(user_id):
+    return datastore.query(
+        'select * from users '
+        'where user_id = ? '
+        'limit 1;',
+        (user_id,),
+        one=True)
+
 def get_building_manifest():
     """
     Return a summary of the building layout.
@@ -50,7 +58,7 @@ def get_rci_collaborators(rci_id):
 
 def get_rci(rci_id): 
     """
-    Fetch a full rci document for the user
+    Fetch an rci document
     """
     rci = find_rci(rci_id)
 
@@ -59,6 +67,25 @@ def get_rci(rci_id):
 
     # TODO: Craft the full rci document with damages coments and whatnot
     return rci 
+
+def get_user_rcis(user_id):
+    """
+    Get all the rcis for which the user is a collaborator
+    """
+    user = find_user(user_id)
+
+    if user is None:
+        raise BadRequest('user {} does not exist'.format(user_id))
+
+    rcis = datastore.query(
+        'select r.* '
+        'from rci_collabs as rc '
+        'inner join rcis as r '
+        'on rc.rci_id = r.rci_id '
+        'where rc.user_id = ? ',
+        (user_id,))
+
+    return rcis
 
 def post_rci(user_id, room_id):
     """

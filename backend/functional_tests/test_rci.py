@@ -41,7 +41,7 @@ def test_create_read_delete_rci(flask_client, student, room):
 
     rci_id = json_data['rci_id']
     
-    # Read
+    # Read the rci by its id
     response = flask_client.get('/api/rci/{}'.format(rci_id))
 
     json_data = response.get_json()
@@ -49,6 +49,15 @@ def test_create_read_delete_rci(flask_client, student, room):
     assert response.status_code == 200
     assert json_data['rci_id'] == rci_id 
     assert json_data['room_id'] == room_id 
+
+    # Read the rci by the user's id
+    response = flask_client.get('/api/user/{}/rcis'.format(student['user_id']))
+
+    json_data = response.get_json()
+
+    assert response.status_code == 200
+    assert len(json_data) == 1 # The user should only have one rci
+    assert json_data[0]['rci_id'] == rci_id
 
     # Delete
     response = flask_client.delete('/api/rci/{}'.format(rci_id))
