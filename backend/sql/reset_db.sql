@@ -35,10 +35,10 @@ CREATE TABLE users (
 
 CREATE TABLE rooms(
     room_id TEXT PRIMARY KEY,
-    room TEXT NOT NULL,
-    building TEXT NOT NULL,
+    room_name TEXT NOT NULL,
+    building_name TEXT NOT NULL,
 
-    UNIQUE (room, building)
+    UNIQUE (room_name, building_name)
 );
 
 CREATE TABLE rcis (

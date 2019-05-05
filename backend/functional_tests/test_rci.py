@@ -1,7 +1,6 @@
 import uuid
 import json
 import pytest
-import functools 
 
 # Use the test_db fixture for all tests
 pytestmark = pytest.mark.usefixtures('test_db')

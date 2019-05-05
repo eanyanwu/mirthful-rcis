@@ -22,6 +22,22 @@ def find_room(room_id):
         (room_id,),
         one=True)
 
+def get_building_manifest():
+    """
+    Return a summary of the building layout.
+    """
+    result = datastore.query('select * from rooms');
+    
+    manifest = {}
+
+    for room in result:
+        building_name = room['building_name']
+        manifest.setdefault(building_name, []).append(room)
+
+    return manifest
+
+
+
 def get_rci_collaborators(rci_id):
     return datastore.query(
         'select * '

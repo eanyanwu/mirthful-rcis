@@ -19,7 +19,6 @@ var http = (function() {
 
                 if (httpRequest.status === 200) {
                     if (success) {
-                        console.log(result);
                         success(JSON.parse(result));
                     }
                 } else {

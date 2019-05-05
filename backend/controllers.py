@@ -51,6 +51,11 @@ def logout_user():
     return create_json_response(data={}, status_code=200)
     
 
+@app.route('/api/rooms', methods=['GET'])
+@auth.login_required
+def get_building_manifest():
+    return create_json_response(data=core.get_building_manifest(), status_code=200)
+
 @app.route('/api/room/<uuid:room_id>/rci', methods=['POST'])
 @auth.login_required
 def post_rci(room_id):

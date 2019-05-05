@@ -29,3 +29,18 @@ VALUES ('fcd02d33-ca85-4246-ab66-25cb67188360',
     'test_staff',
     'res_life_staff');
 
+
+INSERT INTO rooms
+VALUES ('122b4aa9-bc00-466f-b808-c970645873bb',
+    '210',
+    'Nyland');
+
+INSERT INTO rooms
+VALUES ('211c3862-3f40-4ac6-b2e6-a80a3639906a',
+    '211',
+    'Fulton');
+
+INSERT INTO rooms
+VALUES ('02d9a8a6-6d2a-42dc-b55d-8b95d4f7b893',
+    '101',
+    'Fulton');

@@ -18,7 +18,8 @@ function onLogoutClick(event) {
 }
 
 function onNewRciClick(event) {
-    console.log(event);
+    event.preventDefault();
+    window.location.href = "/new_rci.html";
 }
 
 

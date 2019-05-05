@@ -133,13 +133,13 @@ def create_room_core(db_connection):
 
     insert_args = {
         'room_id': room_id,
-        'room': 'room_number_{}'.format(room_id),
-        'building': 'Nyland'
+        'room_name': 'room_number_{}'.format(room_id),
+        'building_name': 'Nyland'
     }
 
     db_connection.execute(
-        'insert into rooms(room_id, room, building) '
-        'values (:room_id, :room, :building) ',
+        'insert into rooms(room_id, room_name, building_name) '
+        'values (:room_id, :room_name, :building_name) ',
         insert_args)
 
     db_connection.commit() # Don't forget to call commit
