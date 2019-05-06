@@ -1,17 +1,26 @@
-// An observablec wrapping the result of an http request.
-var httpResponseObservable = function() {
-
-    // We create an initial structure for the observable object
-    var _innerObservable = observable({
+var httpResponse = function() {
+    return {
         success: false,
         statusCode: 0,
         error: null,
         response: null
-    });
+    };
+};
+
+// An observable wrapping the result of an http request.
+// I am slowly understanding that promises are VERY simliary to 1-event observables.
+// This is a 1-event observable because an http request only emits an event once it completes.
+var httpResponseObservable = function() {
+
+    // We create an initial structure for the observable object
+    var _innerObservable = observable(httpResponse());
 
     // A flag to indicate if the http request has completed.
     // This will allow us to give the result to listeners who subscribed
-    // after the change actually happened
+    // after the change actually happened.
+    // This is more of a convenience feature due to the nature of http requests.
+    // Without it we would need to create the httpResponseObservable object first,
+    // subscribe to it, then pass it to the get/post/delete methods
     var completed = false;
 
     // If the http request was successful, this method should be called
@@ -68,6 +77,9 @@ var httpResponseObservable = function() {
     };
 };
 
+// Http client wrapping the XMLHttpRequest API
+// All the methods return an httpResponseObservable
+// that can be subscribed to
 var http = (function() {
     function createHttpRequestObject() {
         var httpRequest = new XMLHttpRequest();

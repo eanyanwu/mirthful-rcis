@@ -51,11 +51,10 @@ CREATE TABLE rcis (
 );
 
 CREATE TABLE rci_collabs (
-    rci_collab_id TEXT PRIMARY KEY,
     rci_id TEXT NOT NULL,
     user_id TEXT NOT NULL,
     
-    UNIQUE (rci_id, user_id),
+    PRIMARY KEY(rci_id, user_id),
     FOREIGN KEY(rci_id) REFERENCES rcis(rci_id) ON DELETE CASCADE,
     FOREIGN KEY(user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );

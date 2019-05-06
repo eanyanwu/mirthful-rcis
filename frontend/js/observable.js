@@ -1,9 +1,6 @@
-// A module for creating values that can be "observed" 
+// A module for an observable value
 // Tbh it is more of a "notifier" because it notifies the listeners
 // whenever the value changes. 
-//
-// Note: We are making use of javascript closures so read up on 
-// them if you are confused
 var observable = function(value) {
     // List of functions to call whenever there is a change
     // to the value being observed
@@ -36,4 +33,3 @@ var observable = function(value) {
         subscribe: subscribe
     };
 }
-

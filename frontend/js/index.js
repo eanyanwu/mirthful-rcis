@@ -1,40 +1,50 @@
-var loginForm = document.querySelector('form#login-form');
+// Relevant globals
+var loginFormElement = document.querySelector('form#login-form');
+var loginFormContents = {
+    username: observable(""),
+    password: observable(""),
+    output: observable("")
+};
+
+// Data-binding 
+b.bindInputElement(loginFormElement.querySelector("input[name='username']"), loginFormContents.username);
+b.bindInputElement(loginFormElement.querySelector("input[name='password']"), loginFormContents.password);
+b.bindInputElement(loginFormElement.querySelector("output[name='login-error']"), loginFormContents.output);
 
 // Register event listners
-loginForm.addEventListener('submit', onLoginSubmit);
+loginFormElement.addEventListener('submit', onLoginSubmit);
 
+// Listeners
 
+/**
+ * 
+ * @param {Event} event 
+ */
 function onLoginSubmit(event) {
     event.preventDefault();
-    var loginForm = event.currentTarget;
-    var userInput = loginForm.querySelector("input[name='username']");
-    var passInput = loginForm.querySelector("input[name='password']");
-
-    var username = userInput.value; 
-    var password = passInput.value; 
-
-    var authResultObservable = authentication.login(username, password);
     
-    authResultObservable.subscribe(onAuthenticationResult);
+    var username = loginFormContents.username.get();
+    var password = loginFormContents.password.get();
+
+    var authResult = authentication.login(username, password);
+    
+    authResult.subscribe(onAuthenticationResult);
 }
 
 function onAuthenticationResult(result) {
-    var output = loginForm.querySelector("output[name='login-error']");
-
     // Clear the result of potential previous login attempts
-    output.value = "";
+    loginFormContents.output.set("")
 
-    if (result.success) {
-        var response = result.response;
-
-        var dashboardName = response['role'] + "_dashboard.html";
-
-        window.localStorage.setItem('user_id', response['user_id']);
-
-        window.location.href = dashboardName;
+    if (!result.success) {
+        loginFormContents.output.set(result.error["error_message"]);
+        return;
     }
-    else {
-        var errorMessage = result.error["error_message"];
-        output.value = errorMessage;
-    }
+
+    var response = result.response;
+
+    var dashboardName = response['role'] + "_dashboard.html";
+
+    window.localStorage.setItem('user_id', response['user_id']);
+
+    window.location.href = dashboardName;
 }

@@ -38,6 +38,7 @@ def test_create_read_delete_rci(flask_client, student, room):
 
     assert response.status_code == 200
     assert json_data['room_id'] == room['room_id']
+    
 
     rci_id = json_data['rci_id']
     
@@ -78,7 +79,6 @@ def test_lock_unlock_rci(flask_client, res_life_staff, room):
     response = flask_client.post('/api/rci/{}/lock'.format(rci_id))
 
     assert response.status_code == 200
-    assert response.get_json()['is_locked'] == 1
 
     # Test that it cannot be edited
     response = flask_client.post('/api/rci/{}/damage'.format(rci_id),
@@ -93,7 +93,6 @@ def test_lock_unlock_rci(flask_client, res_life_staff, room):
     response = flask_client.delete('/api/rci/{}/lock'.format(rci_id))
 
     assert response.status_code == 200
-    assert response.get_json()['is_locked'] == 0
 
     # Test that it can now be edited
     response = flask_client.post('/api/rci/{}/damage'.format(rci_id),
@@ -144,6 +143,7 @@ def test_create_delete_damage(flask_client, student, room):
     rci_id = response.get_json()['rci_id']
 
     assert response.status_code == 200
+    assert len(response.get_json()['damages']) == 0
 
     # Add Damage
     response = flask_client.post('/api/rci/{}/damage'.format(rci_id),
@@ -155,6 +155,11 @@ def test_create_delete_damage(flask_client, student, room):
     assert response.status_code == 200
     
     damage_id = response.get_json()['damage_id']
+
+    # Make sure that the damage was recorded
+    response = flask_client.get('/api/rci/{}'.format(rci_id))
+
+    assert len(response.get_json()['damages']) == 1
 
     # Delete damage
     response = flask_client.delete('/api/rci/{}/damage/{}'

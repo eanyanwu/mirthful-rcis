@@ -1,54 +1,75 @@
 // Relevant globals
 var newRciForm = document.querySelector("form#new-rci-form");
 var buildingSelect = document.querySelector("select#building-select");
+var buildingOptionTemplate = document.querySelector("template#building-option-template");
 var roomSelect = document.querySelector("select#room-select");
-var buildingManifestObservable = http.get("http://localhost:5000/api/rooms");
+var roomOptionTemplate = document.querySelector("template#room-option-template");
+var buildingManifestResult = http.get("http://localhost:5000/api/rooms");
 
-// Register listeners
-buildingManifestObservable.subscribe(onBuildingManifestDataLoad);
+// Register DOM listeners
 newRciForm.addEventListener("submit", onFormSubmit);
 
+// Register Data listeners
+buildingManifestResult.subscribe(onBuildingManifestLoaded);
 
-// Listeners
-function onBuildingManifestDataLoad(result) {
-    if (result.success) {
-        var buildingManifest = result.response;
-        
-        // Populate the select elements
-        var buildingNames = Object.getOwnPropertyNames(buildingManifest); 
 
-        var buildingOptionElements = buildingNames.map(function(currentValue) {
-            var optionElement = document.createElement("option");
-            optionElement.setAttribute("value", currentValue);
-            optionElement.textContent = currentValue;
+// Data Listeners
 
-            return optionElement;
-        });
-
-        buildingOptionElements.forEach(function(currentValue) {
-            buildingSelect.add(currentValue);
-        });
-        
-        updateRoomSelectElement(buildingSelect[buildingSelect.selectedIndex].value, buildingManifest);
-
-        // Register the listeners
-        buildingSelect.addEventListener("input", function(event) {
-            var currentSelection = event.target[event.target.selectedIndex].value;
-            updateRoomSelectElement(currentSelection, buildingManifest);
-        });
-    }
-    else {
+/**
+ * 
+ * @param {httpResponse} result 
+ */
+function onBuildingManifestLoaded(result) {
+    if (!result.success) {
         console.log(result.statusCode, result.error);
+        return;
     }
+   
+    var buildingManifest = result.response;
+    
+    var buildingNames = Object.getOwnPropertyNames(buildingManifest); 
+
+    var buildingOptionElements = buildingNames.map(function(currentValue) {
+        var domFragment = document.importNode(buildingOptionTemplate.content, true);
+
+        var option = domFragment.querySelector(".building-option");
+
+        option.setAttribute("value", currentValue);
+        option.textContent = currentValue;
+
+        return option;
+    });
+
+    buildingOptionElements.forEach(function(currentValue) {
+        buildingSelect.add(currentValue);
+    });
+    
+    updateRoomSelectElement(buildingSelect[buildingSelect.selectedIndex].value, buildingManifest);
+
+    // Register the listeners
+    buildingSelect.addEventListener("input", function(event) {
+        var currentSelection = event.target[event.target.selectedIndex].value;
+        updateRoomSelectElement(currentSelection, buildingManifest);
+    });
+   
 }
 
+/**
+ * 
+ * @param {string} selectedBuilding 
+ * @param {any} buildingManifest 
+ */
 function updateRoomSelectElement(selectedBuilding, buildingManifest) {
     var rooms = buildingManifest[selectedBuilding];
 
     var roomOptionElements = rooms.map(function(currentValue) {
-        var optionElement = document.createElement("option");
+        var domFragment = document.importNode(roomOptionTemplate.content, true);
+
+        var optionElement = domFragment.querySelector(".room-option");
+
         optionElement.setAttribute("value", currentValue["room_id"]);
         optionElement.textContent = currentValue["room_name"];
+
         return optionElement;
     });
 
@@ -60,6 +81,12 @@ function updateRoomSelectElement(selectedBuilding, buildingManifest) {
     });
 }
 
+// DOM Listeners
+
+/**
+ * 
+ * @param {Event} event 
+ */
 function onFormSubmit(event) {
     event.preventDefault();
 
@@ -67,16 +94,16 @@ function onFormSubmit(event) {
 
     var url = "http://localhost:5000/api/room/" + roomId + '/rci';
     
-    var rciObservable = http.post(url);
+    var newRciResult = http.post(url);
 
-    rciObservable.subscribe(function(result) {
-        if (result.success) {
-            var rci = result.response;
-            var qs = "?rci_id=" + encodeURIComponent(rci["rci_id"]);
-            window.location.href = "existing_rci.html" + qs;
+    newRciResult.subscribe(function(result) {
+        if (!result.success) {
+            console.log(result.statusCode, result.error);
+            return;
         }
-        else {
-            console.log(status_code, error_message);
-        }
+      
+        var rci = result.response;
+        var qs = "?rci_id=" + encodeURIComponent(rci["rci_id"]);
+        window.location.href = "existing_rci.html" + qs;
     });
 }

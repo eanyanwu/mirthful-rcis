@@ -36,6 +36,7 @@ def login_user():
     else:
         raise Unauthorized('Bad Login')
 
+
 @app.route('/logout', methods=['POST'])
 @auth.login_required
 def logout_user():
@@ -50,11 +51,40 @@ def logout_user():
 
     return create_json_response(data={}, status_code=200)
     
+## ROOMS
 
 @app.route('/api/rooms', methods=['GET'])
 @auth.login_required
 def get_building_manifest():
     return create_json_response(data=core.get_building_manifest(), status_code=200)
+
+
+# RCIS
+
+@app.route('/api/rci/<uuid:rci_id>', methods=['GET'])
+@auth.login_required
+def get_rci(rci_id):
+    """
+    Return an existing rci
+    """
+
+    rci = core.get_rci(str(rci_id))
+    
+    return create_json_response(rci, 200)
+
+
+@app.route('/api/user/<uuid:user_id>/rcis', methods=['GET'])
+@auth.login_required
+def get_user_rci(user_id):
+    """
+    Return all the rcis for which the specified user is a collaborator
+    """
+    user_id = str(user_id)
+
+    rcis = core.get_user_rcis(user_id)
+
+    return create_json_response(data=rcis, status_code=200)
+
 
 @app.route('/api/room/<uuid:room_id>/rci', methods=['POST'])
 @auth.login_required
@@ -74,6 +104,7 @@ def post_rci(room_id):
 
     return create_json_response(new_rci, 200, {}) 
 
+
 @app.route('/api/rci/<uuid:rci_id>', methods=['DELETE'])
 @auth.login_required
 def delete_rci(rci_id):
@@ -81,24 +112,27 @@ def delete_rci(rci_id):
     Delete an rci document
     """
     user = g.get('user')
+
     rci_id = str(rci_id)
 
     core.delete_rci(rci_id, user)
 
     return create_json_response(status_code=200)
 
+
 @app.route('/api/rci/<uuid:rci_id>/lock', methods=['POST'])
 @auth.login_required
 def lock_rci(rci_id):
     """
-    Freeze and rci to prevent it from being modified further
+    Freeze the rci to prevent it from being modified further
     """
     user = g.get('user')
     rci_id = str(rci_id)
 
-    rci = core.lock_rci(rci_id, user)
+    core.lock_rci(rci_id, user)
 
-    return create_json_response(data=rci, status_code=200)
+    return create_json_response(status_code=200)
+
 
 @app.route('/api/rci/<uuid:rci_id>/lock', methods=['DELETE'])
 @auth.login_required
@@ -109,32 +143,12 @@ def unlock_rci(rci_id):
     user = g.get('user')
     rci_id = str(rci_id)
 
-    rci = core.unlock_rci(rci_id, user)
+    core.unlock_rci(rci_id, user)
 
-    return create_json_response(data=rci, status_code=200)
+    return create_json_response(status_code=200)
 
-@app.route('/api/rci/<uuid:rci_id>', methods=['GET'])
-@auth.login_required
-def get_rci(rci_id):
-    """
-    Return an existing rci
-    """
 
-    rci = core.get_rci(str(rci_id))
-    
-    return create_json_response(rci, 200)
-
-@app.route('/api/user/<uuid:user_id>/rcis', methods=['GET'])
-@auth.login_required
-def get_user_rci(user_id):
-    """
-    Return all the rcis for which the specified user is a collaborator
-    """
-    user_id = str(user_id)
-
-    rcis = core.get_user_rcis(user_id)
-
-    return create_json_response(data=rcis, status_code=200)
+## DAMAGES
 
 @app.route('/api/rci/<uuid:rci_id>/damage', methods=['POST'])
 @auth.login_required
@@ -158,6 +172,7 @@ def post_damage(rci_id):
     damage = core.post_damage(user, rci_id, text, url)
 
     return create_json_response(damage, 200)
+
 
 @app.route('/api/rci/<uuid:rci_id>/damage/<uuid:damage_id>', methods=['DELETE'])
 @auth.login_required
@@ -186,6 +201,7 @@ def create_error_response(message=None,
         status_code = 400
 
     return create_json_response(error, status_code, extra_headers)
+
 
 def create_json_response(data=None, status_code=None, extra_headers=None):
     if not extra_headers:
