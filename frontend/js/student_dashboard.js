@@ -1,47 +1,50 @@
+// Relevant globals
 var logoutLink = document.querySelector("li#logout>a");
 var newRciLink = document.querySelector("li#new-rci>a");
 var mainSection = document.querySelector("main");
-
 var user_id = window.localStorage.getItem('user_id');
-
-http.get('http://localhost:5000/api/user/'+user_id+'/rcis',
-    function(result) {
-        console.log(result);
-        onExistingRcisLoaded(result);
-    },
-    function(status_code, error) {
-        console.log(status_code, error);
-    }
-);
-
-
+var userRcisObservable = http.get('http://localhost:5000/api/user/'+user_id+'/rcis');
 
 // Register event listners
 logoutLink.addEventListener('click', onLogoutClick);
 newRciLink.addEventListener('click', onNewRciClick);
+userRcisObservable.subscribe(onUserRcisLoaded);
+
+// Listeners
+function onUserRcisLoaded(result) {
+    if (result.success) {
+        var rcis = result.response;
+
+        var rciElements = rcis.map(function(currentValue) {
+            var element = document.createElement("p");
+            element.textContent = currentValue['rci_id'];
+            return element;
+        });
+    
+        mainSection.innerHTML = rciElements.map(function(elem) { return elem.outerHTML }).join("\n");
+
+    }
+    else {
+        console.log(result.statusCode, result.error);
+    }
+}
 
 function onLogoutClick(event) {
     event.preventDefault();
-    authentication.logout(
-        function(result) {
+
+    var logoutResult = authentication.logout();
+    
+    logoutResult.subscribe(function(result) {
+        if (result.success) {
             window.location.href = "/";
-        },
-        function(status_code, error){
-            console.log('ERROR LOGGING OUT', status_code, error);
-        });
+        } 
+        else {
+            console.log('ERROR LOGGING OUT', result.statusCode, result.error);
+        }
+    });
 }
 
 function onNewRciClick(event) {
     event.preventDefault();
     window.location.href = "/new_rci.html";
-}
-
-function onExistingRcisLoaded(rcis) {
-    var rciElements = rcis.map(function(currentValue) {
-        var element = document.createElement("p");
-        element.textContent = currentValue['rci_id'];
-        return element.outerHTML;
-    });
-
-    mainSection.innerHTML = rciElements.join("\n");
 }

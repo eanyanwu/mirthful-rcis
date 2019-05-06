@@ -1,3 +1,73 @@
+// An observablec wrapping the result of an http request.
+var httpResponseObservable = function() {
+
+    // We create an initial structure for the observable object
+    var _innerObservable = observable({
+        success: false,
+        statusCode: 0,
+        error: null,
+        response: null
+    });
+
+    // A flag to indicate if the http request has completed.
+    // This will allow us to give the result to listeners who subscribed
+    // after the change actually happened
+    var completed = false;
+
+    // If the http request was successful, this method should be called
+    function success(statusCode, response) {
+
+        if (completed) {
+            throw "The request has already been completed";
+        }
+        else {
+            _innerObservable.set({
+                success: true,
+                statusCode: statusCode,
+                error: null,
+                response: response
+            });
+
+            completed = true;
+        }
+    }
+
+    // If the http request was not successful, this method should be called
+    function error(statusCode, error) {
+        if (completed) {
+            throw "The request has already been completed";
+        } 
+        else {
+            _innerObservable.set({
+                success: false,
+                statusCode: statusCode,
+                error: error,
+                response: null
+            });
+
+            completed = true;
+        }
+    }
+
+    function subscribe(listener) {
+        if (completed) {
+            // The request has already been completed. 
+            // Give the result right away
+            listener(_innerObservable.get());
+        }
+        else {
+            // The request has not been completed.
+            _innerObservable.subscribe(listener);
+        }
+    }
+
+    return {
+        success: success,
+        error: error,
+        subscribe: subscribe 
+    };
+};
+
 var http = (function() {
     function createHttpRequestObject() {
         var httpRequest = new XMLHttpRequest();
@@ -8,24 +78,28 @@ var http = (function() {
         return httpRequest;
     }
 
-    function handleHttpResponse(httpRequest, success, error) {
+    function handleHttpResponse(httpRequest, httpResponseObservable) {
         try {
             if (httpRequest.readyState === XMLHttpRequest.DONE) {
                 result = httpRequest.response;
 
-                responseHeaders = httpRequest.getAllResponseHeaders();
-
-                console.log(responseHeaders);
-
-                if (httpRequest.status === 200) {
-                    if (success) {
-                        success(JSON.parse(result));
-                    }
-                } else {
-                    if (error) {
-                        error(httpRequest.status, JSON.parse(result));
-                    }
+                try {
+                    result = JSON.parse(result);
                 }
+                catch (ex) {
+                    httpResponseObservable.error(0, ex);
+                }
+
+                var status = httpRequest.status;
+
+                var isSuccess = status >= 200 && status < 300 || status === 304;
+
+                if (isSuccess) {
+                    httpResponseObservable.success(status, result);
+                } else {
+                    httpResponseObservable.error(status, result);
+                }
+
             } else {
                 // Do nothing
             }
@@ -35,32 +109,28 @@ var http = (function() {
         }
     }
 
-    function httpGet(url, successCallback, errorCallback) {
+    function httpGet(url) {
         var httpRequest = createHttpRequestObject();
+        var responseObservable = httpResponseObservable();
 
         httpRequest.onreadystatechange = function() {
-            handleHttpResponse(httpRequest,
-                successCallback,
-                errorCallback);
+            handleHttpResponse(httpRequest, responseObservable);
         };
 
         httpRequest.open('GET', url, true);
 
         httpRequest.send();
+
+        return responseObservable;
     }
 
-    function httpPost(url,
-        data,
-        contentType,
-        successCallback,
-        errorCallback) 
+    function httpPost(url, data, contentType)
     {
         var httpRequest = createHttpRequestObject();
+        var responseObservable = httpResponseObservable();
 
         httpRequest.onreadystatechange = function() {
-            handleHttpResponse(httpRequest,
-                successCallback,
-                errorCallback);
+            handleHttpResponse(httpRequest, responseObservable);
         };
 
         httpRequest.open('POST', url);
@@ -76,36 +146,37 @@ var http = (function() {
         } else {
             httpRequest.send();
         }
+
+        return responseObservable;
     }
 
-    function httpDelete(url, successCallback, errorCallback)
+    function httpDelete(url)
     {
         var httpRequest = createhttpRequestObject();
+        var responseObservable = httpResponseObservable();
 
         httpRequest.onreadystatechange = function() {
-            handleHttpResponse(httpRequest,
-                successCallback,
-                errorCallback);
+            handleHttpResponse(httpRequest, responseObservable);
         };
 
         httpRequest.open('DELETE', url);
 
         httpRequest.send();
+
+        return responseObservable;
     }
 
     return {
-        get: function(url, success, error) {
-            httpGet(url, success, error);
+        get: function(url) {
+            return httpGet(url);
         },
-        post: function(url, data, contentType, success, error) {
-            httpPost(url, data, contentType, success, error);
+        post: function(url, data, contentType) {
+            return httpPost(url, data, contentType);
         },
-        put: function() {
-        },
-        delete: function(url, success, error) {
-            httpDelete(url, success, error);
+        delete: function(url) {
+            return httpDelete(url); 
         }
-    }
-})()
+    };
+})();
 
 
