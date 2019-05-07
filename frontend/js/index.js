@@ -42,9 +42,7 @@ function onAuthenticationResult(result) {
 
     var response = result.response;
 
-    var dashboardName = response['role'] + "_dashboard.html";
-
     window.localStorage.setItem('user_id', response['user_id']);
 
-    window.location.href = dashboardName;
+    window.location.href = "/dashboard.html";
 }

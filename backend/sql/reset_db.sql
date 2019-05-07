@@ -62,6 +62,7 @@ CREATE TABLE rci_collabs (
 CREATE TABLE damages (
     damage_id TEXT PRIMARY KEY,
     rci_id TEXT NOT NULL,
+    item TEXT NOT NULL,
     text TEXT NOT NULL,
     image_url TEXT,
     user_id TEXT NOT NULL,

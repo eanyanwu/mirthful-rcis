@@ -3,6 +3,7 @@ from custom_exceptions import HttpRequestException
 import flask
 import json
 from flask import Flask
+from flask import request
 from flask import g
 
 app = Flask(__name__)
@@ -19,7 +20,7 @@ def close_db_connection(exception):
 @app.after_request
 def inject_cors_headers(response):
     header = response.headers;
-    header['Access-Control-Allow-Origin'] = 'http://localhost:8000'
+    header['Access-Control-Allow-Origin'] = 'http://localhost:8000' 
     header['Access-Control-Allow-Credentials'] = 'true' 
     header['Access-Control-Allow-Headers'] = 'content-type'
     return response

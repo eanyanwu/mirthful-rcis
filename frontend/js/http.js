@@ -81,6 +81,9 @@ var httpResponseObservable = function() {
 // All the methods return an httpResponseObservable
 // that can be subscribed to
 var http = (function() {
+    var apiEndpoint = "http://10.1.203.28:5000";
+    apiEndpoint = "http://localhost:5000";
+
     function createHttpRequestObject() {
         var httpRequest = new XMLHttpRequest();
 
@@ -129,7 +132,7 @@ var http = (function() {
             handleHttpResponse(httpRequest, responseObservable);
         };
 
-        httpRequest.open('GET', url, true);
+        httpRequest.open('GET', apiEndpoint + url, true);
 
         httpRequest.send();
 
@@ -145,7 +148,7 @@ var http = (function() {
             handleHttpResponse(httpRequest, responseObservable);
         };
 
-        httpRequest.open('POST', url);
+        httpRequest.open('POST', apiEndpoint + url);
     
         // If contentType is defined
         if (contentType) {
@@ -171,7 +174,7 @@ var http = (function() {
             handleHttpResponse(httpRequest, responseObservable);
         };
 
-        httpRequest.open('DELETE', url);
+        httpRequest.open('DELETE', apiEndpoint + url);
 
         httpRequest.send();
 

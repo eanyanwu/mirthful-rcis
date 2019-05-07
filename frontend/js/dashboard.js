@@ -4,7 +4,7 @@ var newRciLink = document.querySelector("li#new-rci>a");
 var mainSection = document.querySelector("main");
 var newRciTemplate = document.querySelector("template#rci-template");
 var user_id = window.localStorage.getItem('user_id');
-var userRcisResult = http.get('http://localhost:5000/api/user/'+user_id+'/rcis');
+var userRcisResult = http.get('/api/user/'+user_id+'/rcis');
 
 // Register DOM listeners
 logoutLink.addEventListener('click', onLogoutClick);
@@ -27,11 +27,12 @@ function onUserRcisLoaded(result) {
 
     var rciElements = result.response.map(function(currentValue) {
         var domFragment = document.importNode(newRciTemplate.content, true);
-
+        var rci_id = currentValue["rci_id"]
         var element = domFragment.querySelector(".rci-id");
         element.textContent = currentValue['rci_id'];
+        element.setAttribute("href", "/existing_rci.html?rci_id="+rci_id);
 
-        return element;
+        return domFragment;
     });
 
     rciElements.forEach(function(elem) { mainSection.appendChild(elem); });

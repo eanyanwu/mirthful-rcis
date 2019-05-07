@@ -83,6 +83,7 @@ def test_lock_unlock_rci(flask_client, res_life_staff, room):
     # Test that it cannot be edited
     response = flask_client.post('/api/rci/{}/damage'.format(rci_id),
                                  json={
+                                     'item': 'Wall',
                                      'text': 'Broken wall'
                                  })
 
@@ -97,6 +98,7 @@ def test_lock_unlock_rci(flask_client, res_life_staff, room):
     # Test that it can now be edited
     response = flask_client.post('/api/rci/{}/damage'.format(rci_id),
                                  json={
+                                     'item': 'Wall',
                                      'text': 'Broken wall'
                                  })
 
@@ -113,7 +115,7 @@ def test_try_record_damage_without_text(flask_client, student, room):
     rci_id = response.get_json()['rci_id']
 
     response = flask_client.post('/api/rci/{}/damage'.format(rci_id),
-                                 json={})
+                                 json={'item': 'Desk'})
 
     assert response.status_code == 400
     assert 'damage text is None' in response.get_json()['error_message']
@@ -126,6 +128,7 @@ def test_try_record_damage_on_non_existing_rci(flask_client, student, room):
 
     response = flask_client.post('/api/rci/{}/damage'.format(fake_rci_id),
                                  json={
+                                     'item': 'Wall',
                                      'text': 'Broken wall'
                                  })
 
@@ -148,6 +151,7 @@ def test_create_delete_damage(flask_client, student, room):
     # Add Damage
     response = flask_client.post('/api/rci/{}/damage'.format(rci_id),
                                  json={
+                                     'item': 'Walls',
                                      'text': 'Brokenk wall',
                                      'image_url': 'http://example.com'
                                  })
@@ -185,6 +189,7 @@ def test_add_damage_to_rci_by_res_life_staff(flask_client,
 
     response = flask_client.post('/api/rci/{}/damage'.format(rci_id),
                                  json={
+                                     'item': 'Desk',
                                      'text': 'You forgot this damage'
                                  })
 
@@ -211,6 +216,7 @@ def test_try_add_damage_by_unauthorized_user(flask_client,
 
     response = flask_client.post('/api/rci/{}/damage'.format(rci_id),
                                  json={
+                                     'item': 'Bed',
                                      'text': 'Broken bed'
                                  })
 

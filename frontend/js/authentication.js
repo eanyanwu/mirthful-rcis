@@ -1,9 +1,5 @@
 var authentication = (function(http) {
 
-    // Private members
-    var loginEndpoint = "http://localhost:5000/login";
-    var logoutEndpoint = "http://localhost:5000/logout";
-
     function login_internal(username, password) {
         var user = encodeURIComponent(username);
         var pass = encodeURIComponent(password);
@@ -12,13 +8,11 @@ var authentication = (function(http) {
 
         var contentType = 'application/x-www-form-urlencoded';
 
-        var url = loginEndpoint;
-
-        return http.post(loginEndpoint, data, contentType); 
+        return http.post("/login", data, contentType); 
     }
 
     function logout_internal() {
-        return http.post(logoutEndpoint);
+        return http.post("/logout");
     }
 
     // Return an object exposing the module's public 

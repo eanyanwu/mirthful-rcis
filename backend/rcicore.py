@@ -280,7 +280,7 @@ def delete_rci(rci_id, user):
         (rci_id,))
 
 
-def post_damage(user, rci_id, text, image_url):
+def post_damage(user, rci_id, item, text, image_url):
     """
     Record a damage on the rci 
     """
@@ -315,6 +315,7 @@ def post_damage(user, rci_id, text, image_url):
     damage_insert_args = {
         'damage_id': str(uuid.uuid4()),
         'rci_id': rci_id,
+        'item': item,
         'text': text,
         'image_url': image_url,
         'user_id': user['user_id'],
@@ -323,8 +324,8 @@ def post_damage(user, rci_id, text, image_url):
     
     datastore.query(
         'insert into '
-        'damages(damage_id, rci_id, text, image_url, user_id, created_at) '
-        'values(:damage_id,:rci_id,:text,:image_url,:user_id,:created_at) ',
+        'damages(damage_id, rci_id, item, text, image_url, user_id, created_at) '
+        'values(:damage_id,:rci_id,:item,:text,:image_url,:user_id,:created_at) ',
         damage_insert_args)
 
     return get_damage_record(damage_insert_args['damage_id'])

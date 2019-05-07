@@ -163,13 +163,17 @@ def post_damage(rci_id):
     if data is None:
         raise BadRequest('Malformed json {}'.format(request.data))
 
+    item = data.get('item', None)
     text = data.get('text', None)
     url = data.get('image_url', None)
+
+    if item is None:
+        raise BadRequest('item is None')
 
     if text is None:
         raise BadRequest('damage text is None')
 
-    damage = core.post_damage(user, rci_id, text, url)
+    damage = core.post_damage(user, rci_id, item, text, url)
 
     return create_json_response(damage, 200)
 
