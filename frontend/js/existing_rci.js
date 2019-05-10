@@ -1,7 +1,8 @@
 // Globals
 var rci_id = (new URL(document.location)).searchParams.get('rci_id');
 var rciInfoSection = document.querySelector("section#rci-info");
-
+var rciDamagesSection = document.querySelector("#rci-damages");
+var existingDamageTemplate = document.querySelector("#existing-damage-template");
 var walkthroughLink = document.querySelector("#walkthrough-link");
 var walkthroughSections = document.querySelectorAll("#walkthrough-sections>section");
 var walkthroughContainer = document.querySelector("#walkthrough-container");
@@ -54,9 +55,20 @@ function onRciResponse(result) {
 
     var rci = result.response;
 
-    rciInfoSection.querySelector("p#rci-id").textContent  = rci["rci_id"];
     rciInfoSection.querySelector("p#building-name").textContent = rci["building_name"];
     rciInfoSection.querySelector("p#room-name").textContent = rci["room_name"];
+
+    var damages = rci.damages;
+
+    damages.forEach(function(damage) {
+        var template = document.importNode(existingDamageTemplate.content, true);
+
+        var damageText = damage.item + ": " + damage.text;
+
+        template.querySelector(".existing-damage").textContent = damageText;
+
+        rciDamagesSection.appendChild(template);
+    });
 }
 
 /**
@@ -133,8 +145,8 @@ function onWalkthroughSave(event) {
         }
         return false;
     }).map(function(currentElement) {
-        var text = currentElement.querySelector("h1").textContent;
-        var item = currentElement.querySelector("textarea").value;
+        var item = currentElement.querySelector("h1").textContent;
+        var text = currentElement.querySelector("textarea").value;
 
         currentElement.querySelector("textarea").value = "";
 
@@ -162,7 +174,17 @@ function onWalkthroughSave(event) {
     // Reveal the walkthrough link
     walkthroughLink.removeAttribute("hidden");
 
-    console.log(damages);
+    // Loop through the damages and send them
+    var lastRequest = "";
+    damages.forEach(function(damage) {
+        lastRequest = http.post("/api/rci/"+rci_id+"/damage", JSON.stringify(damage), "application/json");
+    });
+
+    // Refresh the page
+    lastRequest.subscribe(function(result) {
+        window.location.reload(true);
+    });
+
 }
 
 function onWalkthroughStart(event) {

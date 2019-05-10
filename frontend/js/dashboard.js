@@ -25,6 +25,8 @@ function onUserRcisLoaded(result) {
         return;
     }
 
+    console.log(result);
+
     var rciElements = result.response.map(function(currentValue) {
         var domFragment = document.importNode(newRciTemplate.content, true);
         var rci_id = currentValue["rci_id"]

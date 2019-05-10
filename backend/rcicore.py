@@ -43,6 +43,7 @@ def get_full_rci_document(rci_id):
 
     damages = [
         {
+            'item': damage['item'],
             'text': damage['text'],
             'image_url': damage['image_url'],
             'created_at': damage['created_at']
