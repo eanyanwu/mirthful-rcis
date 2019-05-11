@@ -144,13 +144,16 @@ def get_user_rcis(user_id):
     if user is None:
         raise BadRequest('user {} does not exist'.format(user_id))
 
-    rcis = datastore.query(
-        'select r.* '
-        'from rci_collabs as rc '
-        'inner join rcis as r '
-        'on rc.rci_id = r.rci_id '
-        'where rc.user_id = ? ',
+    results = datastore.query(
+        'select * '
+        'from rci_collabs '
+        'where user_id = ? ',
         (user_id,))
+
+    rcis = []
+
+    for res in results:
+        rcis.append(get_full_rci_document(res['rci_id']))
 
     return rcis
 

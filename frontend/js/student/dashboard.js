@@ -25,14 +25,13 @@ function onUserRcisLoaded(result) {
         return;
     }
 
-    console.log(result);
-
-    var rciElements = result.response.map(function(currentValue) {
+    var rciElements = result.response.map(function(rci) {
         var domFragment = document.importNode(newRciTemplate.content, true);
-        var rci_id = currentValue["rci_id"]
-        var element = domFragment.querySelector(".rci-id");
-        element.textContent = currentValue['rci_id'];
-        element.setAttribute("href", "/existing_rci.html?rci_id="+rci_id);
+        var displayText = rci["building_name"] + ": " + rci["room_name"]; 
+        var rciId = rci['rci_id'];
+        var element = domFragment.querySelector(".rci");
+        element.textContent = displayText;
+        element.setAttribute("href", "/student/existing_rci.html?rci_id="+rciId);
 
         return domFragment;
     });
@@ -67,5 +66,5 @@ function onLogoutClick(event) {
  */
 function onNewRciClick(event) {
     event.preventDefault();
-    window.location.href = "/new_rci.html";
+    window.location.href = "/student/new_rci.html";
 }

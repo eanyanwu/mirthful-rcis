@@ -41,8 +41,12 @@ function onAuthenticationResult(result) {
     }
 
     var response = result.response;
+    
+    userId = response["user_id"];
+    role = response["role"];
 
-    window.localStorage.setItem('user_id', response['user_id']);
+    window.localStorage.setItem("userId", userId);
+    window.localStorage.setItem("role", role);
 
-    window.location.href = "/dashboard.html";
+    window.location.href = "/" + role + "/dashboard.html";
 }

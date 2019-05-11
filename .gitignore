@@ -53,10 +53,16 @@ venv.bak/
 
 ###############
 # VSCODE STUFFS
-# #############
+###############
 
 .vscode/*
 .vscode/settings.json
 .vscode/tasks.json
 .vscode/launch.json
 .vscode/extensions.json
+
+
+##################
+# Frontend Related
+##################
+www/
