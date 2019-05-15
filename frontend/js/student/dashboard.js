@@ -3,8 +3,8 @@ var logoutLink = document.querySelector("li#logout>a");
 var newRciLink = document.querySelector("li#new-rci>a");
 var mainSection = document.querySelector("main");
 var newRciTemplate = document.querySelector("template#rci-template");
-var user_id = window.localStorage.getItem('user_id');
-var userRcisResult = http.get('/api/user/'+user_id+'/rcis');
+var userId = window.localStorage.getItem('userId');
+var userRcisResult = http.get('/api/user/'+userId+'/rcis');
 
 // Register DOM listeners
 logoutLink.addEventListener('click', onLogoutClick);

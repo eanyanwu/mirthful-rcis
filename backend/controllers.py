@@ -59,6 +59,10 @@ def get_building_manifest():
     return create_json_response(data=core.get_building_manifest(), status_code=200)
 
 
+@app.route('/api/rooms/areas', methods=['GET'])
+def get_room_areas():
+    pass
+
 # RCIS
 
 @app.route('/api/rci/<uuid:rci_id>', methods=['GET'])
@@ -75,7 +79,7 @@ def get_rci(rci_id):
 
 @app.route('/api/user/<uuid:user_id>/rcis', methods=['GET'])
 @auth.login_required
-def get_user_rci(user_id):
+def get_user_rcis(user_id):
     """
     Return all the rcis for which the specified user is a collaborator
     """
@@ -86,9 +90,23 @@ def get_user_rci(user_id):
     return create_json_response(data=rcis, status_code=200)
 
 
-@app.route('/api/room/<uuid:room_id>/rci', methods=['POST'])
+@app.route('/api/buildings/<string:bldg>/rcis', methods=['GET'])
 @auth.login_required
-def post_rci(room_id):
+def get_building_rcis(bldg):
+    """
+    Return all the rcis for the specified building
+    """
+
+    rcis = core.get_building_rcis(building_name=bldg)
+
+    return create_json_response(data=rcis, status_code=200)
+
+
+@app.route(
+    '/api/building/<string:building>/room/<string:room>/rci',
+    methods=['POST'])
+@auth.login_required
+def post_rci(building, room):
     """
     Create an empty Rci Document for a room
 
@@ -97,10 +115,9 @@ def post_rci(room_id):
     """
     user = g.get('user')
     
-    room_id = str(room_id)
-
     new_rci = core.post_rci(user_id=user['user_id'],
-                            room_id=room_id)
+                            building_name=building,
+                            room_name=room)
 
     return create_json_response(new_rci, 200, {}) 
 

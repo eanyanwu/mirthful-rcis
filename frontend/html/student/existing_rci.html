@@ -1,104 +1,93 @@
-<doctype html>
-<html>
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Rci</title>
-    </head>
-    <body>
-        <nav>
-            <ul>
-                <li>
-                    <a href="/student/dashboard.html">Dashboard</a>
-                </li>
-                <li id="walkthrough-link" hidden>
-                    <a href="#">Walkthrough</a>
-                </li>
-            </ul>
-        </nav>
+{% extends 'templates/base.html' %}
+{% block title %}Rci{% endblock %}
+{% block body %}
+    <nav>
+        <ul>
+            <li>
+                <a href="/student/dashboard.html">Dashboard</a>
+            </li>
+            <li id="walkthrough-link" hidden>
+                <a href="#">Walkthrough</a>
+            </li>
+        </ul>
+    </nav>
 
-        <main>
-            <section id="rci-info">
-                <p id="building-name"></p>
-                <p id="room-name"></p>
-            </section>
+    <main>
+        <section id="rci-info">
+            <p id="building-name"></p>
+            <p id="room-name"></p>
+        </section>
 
-            <section id="rci-damages">
-            </section>
-        </main>
-        
-        <aside id="walkthrough-container">
-            <div id="active-section-container">
-            </div>
-            <button id="walkthrough-prev">Previous</button>
-            <button id="walkthrough-next">Next</button>
-        </aside>
-
-        <div hidden id="walkthrough-sections">
-            <section>
-                <h1>Door(s)/Doorframe/Locks</h1>
-                <h3>Note anything odd</h3>
-                <textarea></textarea>
-            </section>
-            <section>
-                <h1>Carpet/Floor</h1>
-                <h3>Note anything odd</h3>
-                <textarea></textarea>
-            </section>
-            <section>
-                <h1>Walls</h1>
-                <h3>Note anything odd</h3>
-                <textarea></textarea>
-            </section>
-            <section>
-                <h1>Windows/Window panes/Nets/Glass</h1>
-                <h3>Note anything odd</h3>
-                <textarea></textarea>
-            </section>
-            <section>
-                <h1>Bedframe/Mattress</h1>
-                <h3>Note anything odd</h3>
-                <textarea></textarea>
-            </section>
-            <section>
-                <h1>Desks/Chairs</h1>
-                <h3>Note anything odd</h3>
-                <textarea></textarea>
-            </section>
-            <section>
-                <h1>Drawers/Wardrobe</h1>
-                <h3>Note anything odd</h3>
-                <textarea></textarea>
-            </section>
-            <section>
-                <h1>Mirrors</h1>
-                <h3>Note anything odd</h3>
-                <textarea></textarea>
-            </section>
-            <section>
-                <h1>Ceiling</h1>
-                <h3>Note anything odd</h3>
-                <textarea></textarea>
-            </section>
-            <section>
-                <h1>You're done!</h2>
-                <h3>Save and review your recorded damages</h3>
-                <button id="walkthrough-save">
-                    Save & Review
-                </button>
-            </section>
+        <section id="rci-damages">
+        </section>
+    </main>
+    
+    <aside id="walkthrough-container">
+        <div id="active-section-container">
         </div>
+        <button id="walkthrough-prev">Previous</button>
+        <button id="walkthrough-next">Next</button>
+    </aside>
 
-        <template id="existing-damage-template">
-            <p class="existing-damage"></p>
-        </template>
+    <div hidden id="walkthrough-sections">
+        <section>
+            <h1>Door(s)/Doorframe/Locks</h1>
+            <h3>Note anything odd</h3>
+            <textarea></textarea>
+        </section>
+        <section>
+            <h1>Carpet/Floor</h1>
+            <h3>Note anything odd</h3>
+            <textarea></textarea>
+        </section>
+        <section>
+            <h1>Walls</h1>
+            <h3>Note anything odd</h3>
+            <textarea></textarea>
+        </section>
+        <section>
+            <h1>Windows/Window panes/Nets/Glass</h1>
+            <h3>Note anything odd</h3>
+            <textarea></textarea>
+        </section>
+        <section>
+            <h1>Bedframe/Mattress</h1>
+            <h3>Note anything odd</h3>
+            <textarea></textarea>
+        </section>
+        <section>
+            <h1>Desks/Chairs</h1>
+            <h3>Note anything odd</h3>
+            <textarea></textarea>
+        </section>
+        <section>
+            <h1>Drawers/Wardrobe</h1>
+            <h3>Note anything odd</h3>
+            <textarea></textarea>
+        </section>
+        <section>
+            <h1>Mirrors</h1>
+            <h3>Note anything odd</h3>
+            <textarea></textarea>
+        </section>
+        <section>
+            <h1>Ceiling</h1>
+            <h3>Note anything odd</h3>
+            <textarea></textarea>
+        </section>
+        <section>
+            <h1>You're done!</h2>
+            <h3>Save and review your recorded damages</h3>
+            <button id="walkthrough-save">
+                Save & Review
+            </button>
+        </section>
+    </div>
 
-        <!-- Javascript -->
-        <script src="/js/modules/observable.js" defer="true"></script>
-        <script src="/js/modules/databinding.js" defer="true"></script>
-        <script src="/js/modules/http.js" defer="true"></script>
-        <script src="/js/modules/authentication.js" defer="true"></script>
-        <script src="/js/student/existing_rci.js" defer="true"></script>
-    </body>
-</html>
-
+    <template id="existing-damage-template">
+        <p class="existing-damage"></p>
+    </template>
+{% endblock %}
+{% block js %}
+    <script src="/js/student/existing_rci.js" defer="true"></script>
+{% endblock %}

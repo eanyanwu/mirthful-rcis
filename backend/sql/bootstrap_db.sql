@@ -15,6 +15,7 @@ VALUES ('admin', 'Residence Life Director', 4);
 
 -- Records for testing
 
+-- Users
 INSERT INTO users 
 VALUES ('32151344-dfa6-4e70-89b1-140d756c0079',
     'test_student',
@@ -30,17 +31,26 @@ VALUES ('fcd02d33-ca85-4246-ab66-25cb67188360',
     'res_life_staff');
 
 
+-- Rooms
 INSERT INTO rooms
-VALUES ('122b4aa9-bc00-466f-b808-c970645873bb',
-    '210',
-    'Nyland');
+VALUES ('210', 'Nyland');
 
 INSERT INTO rooms
-VALUES ('211c3862-3f40-4ac6-b2e6-a80a3639906a',
-    '211',
-    'Fulton');
+VALUES ('211', 'Fulton');
 
 INSERT INTO rooms
-VALUES ('02d9a8a6-6d2a-42dc-b55d-8b95d4f7b893',
-    '101',
-    'Fulton');
+VALUES ('101', 'Fulton');
+
+
+-- Walkthrough Items
+INSERT INTO room_areas
+VALUES ('Door(s)/Doorframe/Locks', 'Anything damages around the room entrance');
+
+INSERT INTO room_areas
+VALUES('Carpet/Floor', 'Stains, scratchs, and other imperfections');
+
+INSERT INTO room_areas
+VALUES('Walls', 'Discollorations, nail holes, paint chips ... ');
+
+INSERT INTO room_areas
+VALUES('Desks/Chair', 'Any missing furniture, broken drawers etc...');

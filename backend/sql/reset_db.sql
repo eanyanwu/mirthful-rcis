@@ -10,7 +10,7 @@ DROP TABLE IF EXISTS rooms;
 DROP TABLE IF EXISTS rcis;
 DROP TABLE IF EXISTS rci_collabs;
 DROP TABLE IF EXISTS damages;
-
+DROP TABLE IF EXISTS room_areas;
 DROP TABLE IF EXISTS sessions;
 
 PRAGMA foreign_keys = ON;
@@ -34,20 +34,21 @@ CREATE TABLE users (
 );
 
 CREATE TABLE rooms(
-    room_id TEXT PRIMARY KEY,
-    room_name TEXT NOT NULL,
     building_name TEXT NOT NULL,
+    room_name TEXT NOT NULL,
 
-    UNIQUE (room_name, building_name)
+    PRIMARY KEY (building_name, room_name)
 );
 
 CREATE TABLE rcis (
     rci_id TEXT PRIMARY KEY,
-    room_id TEXT NOT NULL,
+    building_name TEXT NOT NULL,
+    room_name TEXT NOT NULL,
     created_at TEXT NOT NULL,
     is_locked INTEGER NOT NULL DEFAULT 0,
 
-    FOREIGN KEY(room_id) REFERENCES rooms(room_id) ON DELETE CASCADE
+    FOREIGN KEY(building_name, room_name)
+    REFERENCES rooms(building_name, room_name) ON DELETE CASCADE
 );
 
 CREATE TABLE rci_collabs (
@@ -70,6 +71,11 @@ CREATE TABLE damages (
 
     FOREIGN KEY(rci_id) REFERENCES rcis(rci_id) ON DELETE CASCADE,
     FOREIGN KEY(user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
+CREATE TABLE room_areas (
+    area TEXT PRIMARY KEY,
+    area_prompt TEXT
 );
 
 CREATE TABLE sessions (

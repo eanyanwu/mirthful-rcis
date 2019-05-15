@@ -67,7 +67,7 @@ def flask_client():
 
     client.testing = True
 
-    # We also define convenience method `login_as` and `logout` on
+    # We also define some convenience methods `login_as` and `logout` on
     # this client.
     def login_as(user):
         response = client.post(
@@ -84,8 +84,19 @@ def flask_client():
 
         return response
 
+    def create_rci(room):
+        room_name = room['room_name']
+        building_name = room['building_name']
+
+        response = client.post(
+            '/api/building/{}/room/{}/rci'.format(building_name, room_name)
+        )
+
+        return response
+
     client.login_as = login_as
     client.logout = logout
+    client.create_rci = create_rci
 
     yield client
 
@@ -128,18 +139,19 @@ def create_room_core(db_connection):
     """
     Helper function for creating a room
     """
-
-    room_id = str(uuid.uuid4())
+    random_uuid = uuid.uuid4()
+    
+    room_name = 'room_number_{}'.format(random_uuid)
+    building_name = 'Nyland'
 
     insert_args = {
-        'room_id': room_id,
-        'room_name': 'room_number_{}'.format(room_id),
-        'building_name': 'Nyland'
+        'building_name': building_name,
+        'room_name': room_name 
     }
 
     db_connection.execute(
-        'insert into rooms(room_id, room_name, building_name) '
-        'values (:room_id, :room_name, :building_name) ',
+        'insert into rooms(building_name, room_name) '
+        'values (:building_name, :room_name) ',
         insert_args)
 
     db_connection.commit() # Don't forget to call commit
@@ -147,9 +159,10 @@ def create_room_core(db_connection):
     results = db_connection.execute(
         'select * '
         'from rooms '
-        'where room_id = ? '
+        'where building_name=? '
+        'and room_name=? '
         'limit 1;',
-        (room_id,))
+        (building_name, room_name))
 
     return results.fetchone()
 

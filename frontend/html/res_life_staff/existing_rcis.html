@@ -1,5 +1,5 @@
 {% extends 'templates/base.html' %}
-{% block title %}Student Dashboard{% endblock %}
+{% block title %}Building Rcis{% endblock %}
 {% block body %}
     <nav>
         <ul>
@@ -7,7 +7,7 @@
                 <a href='/'>Logout</a>
             </li>
             <li id="new-rci">
-                <a href='/new_rci.html'>Create New Rci</a>
+                <a href='/res_life_staff/new_rci.html'>Create New Rci</a>
             </li>
         </ul>
     </nav>
@@ -20,6 +20,6 @@
     </template>
 {% endblock %}    
 {% block js %}
-        <script src="/js/student/dashboard.js" defer="true"></script>
+        <script src="/js/res_life_staff/existing_rcis.js" defer="true"></script>
 {% endblock %}
 

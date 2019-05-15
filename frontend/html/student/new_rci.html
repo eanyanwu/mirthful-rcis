@@ -1,39 +1,29 @@
-<doctype html>
-<html>
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>New Rci</title>
-    </head>
-    <body>
-        <main>
-            <form id="new-rci-form">
-                <label for="building-select">Select a building:</label>
-                <select id="building-select">
-                </select>
+{% extends 'templates/base.html' %}
+{% block title %}New Rci{% endblock %}
+{% block body %}
+    <main>
+        <form id="new-rci-form">
+            <label for="building-select">Select a building:</label>
+            <select id="building-select">
+            </select>
 
-                <label for="room-select">Select a room:</label>
-                <select id="room-select">
-                </select>
+            <label for="room-select">Select a room:</label>
+            <select id="room-select">
+            </select>
 
-                <button type="submit">Create New Rci</button>
-            </form>
+            <button type="submit">Create New Rci</button>
+        </form>
 
-        </main>
+    </main>
 
-        <template id="building-option-template">
-            <option class="building-option" value=""></option>
-        </template>
+    <template id="building-option-template">
+        <option class="building-option" value=""></option>
+    </template>
 
-        <template id="room-option-template">
-            <option class="room-option" value=""></option>
-        </template>
-
-        <!-- Javascript -->
-        <script src="/js/modules/observable.js" defer="true"></script>
-        <script src="/js/modules/http.js" defer="true"></script>
-        <script src="/js/modules/authentication.js" defer="true"></script>
-        <script src="/js/student/new_rci.js" defer="true"></script>
-    </body>
-</html>
-
+    <template id="room-option-template">
+        <option class="room-option" value=""></option>
+    </template>
+{% endblock %}
+{% block js %}
+    <script src="/js/student/new_rci.js" defer="true"></script>
+{% endblock %}

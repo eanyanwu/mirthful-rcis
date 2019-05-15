@@ -20,15 +20,7 @@ def get_full_rci_document(rci_id):
     Creates a complete rci document that includes
     the rci collaborators and damages recorded
     """
-    rci = datastore.query(
-        'select * '
-        'from rcis as rci '
-        'inner join rooms as room '
-        'using(room_id) '
-        'where rci.rci_id = ? '
-        'limit 1',
-        (rci_id,),
-        one=True)
+    rci = get_rci_record(rci_id)
 
     if rci is None:
         raise BadRequest('no such rci {}'.format(rci_id))
@@ -56,13 +48,11 @@ def get_full_rci_document(rci_id):
         'rci_id': rci_id,
         'collaborators': rci_collaborators,
         'damages': damages,
-        'room_id': rci['room_id'],
         'room_name': rci['room_name'],
         'building_name': rci['building_name'],
         'created_at': rci['created_at'],
         'is_locked': True if rci['is_locked'] == 1 else False
     }
-
 
     return full_rci_doc 
 
@@ -76,21 +66,23 @@ def get_damage_record(damage_id):
         one=True)
 
 
+def get_room_record(building_name, room_name):
+    return datastore.query(
+        'select * '
+        'from rooms '
+        'where building_name=? '
+        'and room_name=? '
+        'limit 1',
+        (building_name, room_name),
+        one=True)
+
+
 def get_damages_for_rci(rci_id):
     return datastore.query(
         'select * '
         'from damages '
         'where rci_id =? ',
         (rci_id,))
-
-
-def get_room_record(room_id):
-    return datastore.query(
-        'select * from rooms '
-        'where room_id = ? '
-        'limit 1',
-        (room_id,),
-        one=True)
 
 
 def get_user_record(user_id):
@@ -122,6 +114,12 @@ def get_building_manifest():
         manifest.setdefault(building_name, []).append(room)
 
     return manifest
+
+def get_room_areas():
+    """
+    Return the list of default room areas
+    """
+    pass
 
 
 def get_rci(rci_id): 
@@ -157,7 +155,14 @@ def get_user_rcis(user_id):
 
     return rcis
 
-def post_rci(user_id, room_id):
+def get_building_rcis(building_name):
+    """
+    Get all the rcis for the building `building_name`
+    """
+    pass
+
+
+def post_rci(user_id, building_name, room_name):
     """
     Creates a new rci record for a room.
 
@@ -169,14 +174,17 @@ def post_rci(user_id, room_id):
     new_rci_id = str(uuid.uuid4())
 
     # First check that the room exists
-    room = get_room_record(room_id)
+    room = get_room_record(building_name=building_name,
+                           room_name=room_name)
 
     if room is None:
-        raise BadRequest('room {} does not exist'.format(room_id))
+        raise BadRequest('room {}{} does not exist'
+                         .format(building_name, room_name))
 
     rci_insert_args = {
         'rci_id': new_rci_id, 
-        'room_id': room_id,
+        'room_name': room_name,
+        'building_name': building_name,
         'created_at': datetime.utcnow().isoformat(),
     }
 
@@ -187,8 +195,8 @@ def post_rci(user_id, room_id):
    
     # Create the rci document
     datastore.query(
-        'insert into rcis(rci_id, room_id, created_at) '
-        'values(:rci_id, :room_id, :created_at)',
+        'insert into rcis(rci_id, building_name, room_name, created_at) '
+        'values(:rci_id,:building_name,:room_name,:created_at)',
         rci_insert_args)
     
     # Add the user as an a collaborator for the rci
