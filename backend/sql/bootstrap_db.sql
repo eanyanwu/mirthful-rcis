@@ -33,13 +33,13 @@ VALUES ('fcd02d33-ca85-4246-ab66-25cb67188360',
 
 -- Rooms
 INSERT INTO rooms
-VALUES ('210', 'Nyland');
+VALUES ('Nyland', '210');
 
 INSERT INTO rooms
-VALUES ('211', 'Fulton');
+VALUES ('Fulton', '211');
 
 INSERT INTO rooms
-VALUES ('101', 'Fulton');
+VALUES ('Fulton', '101');
 
 
 -- Walkthrough Items

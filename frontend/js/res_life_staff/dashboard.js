@@ -23,6 +23,8 @@ function onBuildingManifestLoaded(result) {
         return;
     }
 
+    console.log(result)
+
     var buildings = Object.getOwnPropertyNames(result.response);
 
     console.log(buildings);
