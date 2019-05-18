@@ -159,7 +159,32 @@ def get_building_rcis(building_name):
     """
     Get all the rcis for the building `building_name`
     """
-    pass
+    t = datastore.query(
+        'select * '
+        'from rooms '
+        'where building_name = ? '
+        'limit 1', 
+        (building_name,),
+        one=True
+    )
+
+    if t is None:
+        raise BadRequest('building {} does not exist'.format(building_name))
+
+
+    results = datastore.query(
+        'select * '
+        'from rcis '
+        'where building_name = ? ',
+        (building_name,)
+    )
+
+    rcis = []
+
+    for res in results:
+        rcis.append(get_full_rci_document(res['rci_id']))
+
+    return rcis
 
 
 def post_rci(user_id, building_name, room_name):

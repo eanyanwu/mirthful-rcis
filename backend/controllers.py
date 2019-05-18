@@ -97,6 +97,8 @@ def get_building_rcis(bldg):
     Return all the rcis for the specified building
     """
 
+    user = g.get('user')
+
     rcis = core.get_building_rcis(building_name=bldg)
 
     return create_json_response(data=rcis, status_code=200)

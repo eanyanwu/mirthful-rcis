@@ -1,5 +1,5 @@
 // Globals
-var rci_id = (new URL(document.location)).searchParams.get('rci_id');
+var rciId = (new URL(document.location)).searchParams.get('rciId');
 var rciInfoSection = document.querySelector("section#rci-info");
 var rciDamagesSection = document.querySelector("#rci-damages");
 var existingDamageTemplate = document.querySelector("#existing-damage-template");
@@ -28,11 +28,11 @@ var firstSection = nextPipe.shift();
 activeSectionContainer.appendChild(firstSection);
 
 
-if (!rci_id) { 
-    throw "No rci_id present in url";
+if (!rciId) { 
+    throw "No rciId present in url";
 }
 
-var rciResult = http.get("/api/rci/"+rci_id);
+var rciResult = http.get("/api/rci/"+rciId);
 
 
 // Register DOM events
@@ -177,7 +177,7 @@ function onWalkthroughSave(event) {
     // Loop through the damages and send them
     var lastRequest = "";
     damages.forEach(function(damage) {
-        lastRequest = http.post("/api/rci/"+rci_id+"/damage", JSON.stringify(damage), "application/json");
+        lastRequest = http.post("/api/rci/"+rciId+"/damage", JSON.stringify(damage), "application/json");
     });
 
     // Refresh the page

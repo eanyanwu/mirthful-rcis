@@ -88,10 +88,11 @@ function updateRoomSelectElement(selectedBuilding, buildingManifest) {
  */
 function onFormSubmit(event) {
     event.preventDefault();
+    
+    var building = buildingSelect[buildingSelect.selectedIndex].textContent
+    var room = roomSelect[roomSelect.selectedIndex].textContent;
 
-    var roomId = roomSelect[roomSelect.selectedIndex].value;
-
-    var newRciResult = http.post("/api/room/" + roomId + '/rci');
+    var newRciResult = http.post("/api/building/"+building+'/room/'+room+'/rci');
 
     newRciResult.subscribe(function(result) {
         if (!result.success) {
@@ -100,7 +101,7 @@ function onFormSubmit(event) {
         }
       
         var rci = result.response;
-        var qs = "?rci_id=" + encodeURIComponent(rci["rci_id"]);
+        var qs = "?rciId=" + encodeURIComponent(rci["rci_id"]);
         window.location.href = "existing_rci.html" + qs;
     });
 }

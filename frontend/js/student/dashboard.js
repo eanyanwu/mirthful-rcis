@@ -31,7 +31,7 @@ function onUserRcisLoaded(result) {
         var rciId = rci['rci_id'];
         var element = domFragment.querySelector(".rci");
         element.textContent = displayText;
-        element.setAttribute("href", "/student/existing_rci.html?rci_id="+rciId);
+        element.setAttribute("href", "/student/existing_rci.html?rciId="+rciId);
 
         return domFragment;
     });
