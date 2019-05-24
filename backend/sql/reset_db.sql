@@ -7,6 +7,7 @@ PRAGMA foreign_keys = OFF;
 DROP TABLE IF EXISTS roles;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS rooms;
+DROP TABLE IF EXISTS room_areas;
 DROP TABLE IF EXISTS rcis;
 DROP TABLE IF EXISTS rci_collabs;
 DROP TABLE IF EXISTS damages;
@@ -40,6 +41,11 @@ CREATE TABLE rooms(
     PRIMARY KEY (building_name, room_name)
 );
 
+CREATE TABLE room_areas(
+    room_area_name PRIMARY KEY,
+    room_area_description NOT NULL
+);
+
 CREATE TABLE rcis (
     rci_id TEXT PRIMARY KEY,
     building_name TEXT NOT NULL,
@@ -71,11 +77,6 @@ CREATE TABLE damages (
 
     FOREIGN KEY(rci_id) REFERENCES rcis(rci_id) ON DELETE CASCADE,
     FOREIGN KEY(user_id) REFERENCES users(user_id) ON DELETE CASCADE
-);
-
-CREATE TABLE room_areas (
-    area TEXT PRIMARY KEY,
-    area_prompt TEXT
 );
 
 CREATE TABLE sessions (

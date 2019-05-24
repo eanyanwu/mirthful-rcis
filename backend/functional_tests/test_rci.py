@@ -5,29 +5,6 @@ import pytest
 # Use the test_db fixture for all tests
 pytestmark = pytest.mark.usefixtures('test_db')
  
-def test_try_read_nonexistent_rci(flask_client, student):
-    flask_client.login_as(student)
-
-    response = flask_client.get('/api/rci/{}'.format(uuid.uuid4()))
-
-    assert response.status_code == 400
-    assert 'does not exist' in response.get_json()['error_message']
-
-def test_try_create_rci_for_non_existent_room(flask_client, student):
-    fake_room = {
-        'building_name' : 'badbuilding',
-        'room_name' : 'badroom'
-    }
-
-    flask_client.login_as(student)
-
-    # Test
-    response = flask_client.create_rci(fake_room) 
-
-    assert response.status_code == 400
-    assert 'does not exist' in response.get_json()['error_message']
-
-
 def test_create_read_delete_rci(flask_client, student, room):
     # Setup 
     flask_client.login_as(student)
@@ -37,8 +14,6 @@ def test_create_read_delete_rci(flask_client, student, room):
 
     json_data = response.get_json()
 
-    print(json_data)
-
     assert response.status_code == 200
     assert json_data['room_name'] == room['room_name']
     assert json_data['building_name'] == room['building_name']
@@ -47,7 +22,7 @@ def test_create_read_delete_rci(flask_client, student, room):
     rci_id = json_data['rci_id']
     
     # Read the rci by its id
-    response = flask_client.get('/api/rci/{}'.format(rci_id))
+    response = flask_client.get('/api/rcis/{}'.format(rci_id))
 
     json_data = response.get_json()
     
@@ -57,16 +32,17 @@ def test_create_read_delete_rci(flask_client, student, room):
     assert json_data['building_name'] == room['building_name']
 
     # Read the rci by the user's id
-    response = flask_client.get('/api/user/{}/rcis'.format(student['user_id']))
+    response = flask_client.get('/api/rcis?filter_type=USER_ID&filter_value={}'
+                                .format(student['user_id']))
 
     json_data = response.get_json()
-
-    assert response.status_code == 200
+    
+    assert response.status_code == 240
     assert len(json_data) == 1 # The user should only have one rci
     assert json_data[0]['rci_id'] == rci_id
 
     # Delete
-    response = flask_client.delete('/api/rci/{}'.format(rci_id))
+    response = flask_client.delete('/api/rcis/{}'.format(rci_id))
 
     assert response.status_code == 200
 
@@ -79,12 +55,12 @@ def test_lock_unlock_rci(flask_client, res_life_staff, room):
     rci_id = response.get_json()['rci_id']
     
     # Lock it
-    response = flask_client.post('/api/rci/{}/lock'.format(rci_id))
+    response = flask_client.post('/api/rcis/{}/lock'.format(rci_id))
 
     assert response.status_code == 200
 
     # Test that it cannot be edited
-    response = flask_client.post('/api/rci/{}/damage'.format(rci_id),
+    response = flask_client.post('/api/rcis/{}/damages'.format(rci_id),
                                  json={
                                      'item': 'Wall',
                                      'text': 'Broken wall'
@@ -94,12 +70,12 @@ def test_lock_unlock_rci(flask_client, res_life_staff, room):
     assert 'locked' in response.get_json()['error_message']
 
     # Unlock it 
-    response = flask_client.delete('/api/rci/{}/lock'.format(rci_id))
+    response = flask_client.delete('/api/rcis/{}/lock'.format(rci_id))
 
     assert response.status_code == 200
 
     # Test that it can now be edited
-    response = flask_client.post('/api/rci/{}/damage'.format(rci_id),
+    response = flask_client.post('/api/rcis/{}/damages'.format(rci_id),
                                  json={
                                      'item': 'Wall',
                                      'text': 'Broken wall'
@@ -107,19 +83,6 @@ def test_lock_unlock_rci(flask_client, res_life_staff, room):
 
     assert response.status_code == 200
 
-
-def test_try_record_damage_without_text(flask_client, student, room):
-    flask_client.login_as(student)
-
-    response = flask_client.create_rci(room)
-
-    rci_id = response.get_json()['rci_id']
-
-    response = flask_client.post('/api/rci/{}/damage'.format(rci_id),
-                                 json={'item': 'Desk'})
-
-    assert response.status_code == 400
-    assert 'damage text is None' in response.get_json()['error_message']
 
 def test_create_delete_damage(flask_client, student, room):
     flask_client.login_as(student)
@@ -133,7 +96,7 @@ def test_create_delete_damage(flask_client, student, room):
     assert len(response.get_json()['damages']) == 0
 
     # Add Damage
-    response = flask_client.post('/api/rci/{}/damage'.format(rci_id),
+    response = flask_client.post('/api/rcis/{}/damages'.format(rci_id),
                                  json={
                                      'item': 'Walls',
                                      'text': 'Brokenk wall',
@@ -145,63 +108,12 @@ def test_create_delete_damage(flask_client, student, room):
     damage_id = response.get_json()['damage_id']
 
     # Make sure that the damage was recorded
-    response = flask_client.get('/api/rci/{}'.format(rci_id))
+    response = flask_client.get('/api/rcis/{}'.format(rci_id))
 
     assert len(response.get_json()['damages']) == 1
 
     # Delete damage
-    response = flask_client.delete('/api/rci/{}/damage/{}'
+    response = flask_client.delete('/api/rcis/{}/damages/{}'
                                    .format(rci_id, damage_id))
 
     assert response.status_code == 200
-
-
-def test_add_damage_to_rci_by_res_life_staff(flask_client,
-                                             student,
-                                             res_life_staff,
-                                             room):
-    flask_client.login_as(student)
-    
-    # Create the rci
-    response = flask_client.create_rci(room)
-
-    rci_id = response.get_json()['rci_id']
-
-    # Now login as a res_life_staff member and add damages
-    flask_client.login_as(res_life_staff)
-
-    response = flask_client.post('/api/rci/{}/damage'.format(rci_id),
-                                 json={
-                                     'item': 'Desk',
-                                     'text': 'You forgot this damage'
-                                 })
-
-    assert response.status_code == 200
-
-def test_try_add_damage_by_unauthorized_user(flask_client,
-                                             user_factory,
-                                             room):
-    # Create the original owner of the rci
-    student_1 = user_factory('student')
-
-    flask_client.login_as(student_1)
-
-    # Create the Rci
-    response = flask_client.create_rci(room)
-
-    rci_id = response.get_json()['rci_id']
-
-    # Now login as the second user, a student who should
-    # not have access to this rci
-    student_2 = user_factory('student')
-
-    flask_client.login_as(student_2)
-
-    response = flask_client.post('/api/rci/{}/damage'.format(rci_id),
-                                 json={
-                                     'item': 'Bed',
-                                     'text': 'Broken bed'
-                                 })
-
-    assert response.status_code == 401
-    assert 'cannot record damage' in response.get_json()['error_message']

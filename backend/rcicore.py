@@ -1,4 +1,5 @@
 import datastore
+import rci_filter 
 from authorization import Permission 
 from authorization import user_can
 from custom_exceptions import BadRequest, Unauthorized
@@ -7,12 +8,44 @@ import uuid
 from datetime import datetime, timedelta
 
 def get_rci_record(rci_id):
+    """
+    Useful method for quickly figuring out if an rci exists
+
+    Returns the rci db record if it does.
+    Returns None if it does not
+    """
     return datastore.query(
         'select * from rcis '
         'where rci_id = ? '
         'limit 1',
         (rci_id,),
         one=True)
+
+
+def get_damage_record(damage_id):
+    """
+    Useful method for quickly figuring out if a damage record
+
+    Returns the damage record if it does
+    Returns None if it does not
+    """
+    return datastore.query(
+        'select * '
+        'from damages '
+        'where damage_id = ?', 
+        (damage_id,),
+        one=True)
+
+
+def get_rci_collaborators(rci_id):
+    """
+    Useful method for listing the collaborators for an rci
+    """
+    return datastore.query(
+        'select * ' 
+        'from rci_collabs '
+        'where rci_id = ?',
+        (rci_id,))
 
 
 def get_full_rci_document(rci_id):
@@ -33,16 +66,7 @@ def get_full_rci_document(rci_id):
         'where rc.rci_id = ?',
         (rci_id,))
 
-    damages = [
-        {
-            'item': damage['item'],
-            'text': damage['text'],
-            'image_url': damage['image_url'],
-            'created_at': damage['created_at']
-        }
-
-        for damage in get_damages_for_rci(rci_id)
-    ]
+    damages = get_damages_for_rci(rci_id) 
 
     full_rci_doc = {
         'rci_id': rci_id,
@@ -57,26 +81,6 @@ def get_full_rci_document(rci_id):
     return full_rci_doc 
 
 
-def get_damage_record(damage_id):
-    return datastore.query(
-        'select * '
-        'from damages '
-        'where damage_id = ?', 
-        (damage_id,),
-        one=True)
-
-
-def get_room_record(building_name, room_name):
-    return datastore.query(
-        'select * '
-        'from rooms '
-        'where building_name=? '
-        'and room_name=? '
-        'limit 1',
-        (building_name, room_name),
-        one=True)
-
-
 def get_damages_for_rci(rci_id):
     return datastore.query(
         'select * '
@@ -85,22 +89,7 @@ def get_damages_for_rci(rci_id):
         (rci_id,))
 
 
-def get_user_record(user_id):
-    return datastore.query(
-        'select * from users '
-        'where user_id = ? '
-        'limit 1;',
-        (user_id,),
-        one=True)
-
-def get_rci_collaborators(rci_id):
-    return datastore.query(
-        'select * ' 
-        'from rci_collabs '
-        'where rci_id = ?',
-        (rci_id,))
-
-
+# Rooms 
 def get_building_manifest():
     """
     Return a summary of the building layout.
@@ -119,72 +108,45 @@ def get_room_areas():
     """
     Return the list of default room areas
     """
-    pass
+    return datastore.query(
+        'select * '
+        'from room_areas'
+    )
 
 
 def get_rci(rci_id): 
     """
     Fetch an rci document
     """
-    rci = get_rci_record(rci_id)
+    rci = get_full_rci_document(rci_id)
 
     if rci is None:
         raise BadRequest('rci {} does not exist'.format(rci_id))
 
-    return get_full_rci_document(rci_id) 
+    return rci 
 
-def get_user_rcis(user_id):
+def get_rcis(filter_params):
     """
-    Get all the rcis for which the user is a collaborator
+    Fetch a list of rci documents according to the filter
     """
-    user = get_user_record(user_id)
 
-    if user is None:
-        raise BadRequest('user {} does not exist'.format(user_id))
+    if filter_params['filter_type'] is None:
+        raise BadRequest('filter type is None')
 
-    results = datastore.query(
-        'select * '
-        'from rci_collabs '
-        'where user_id = ? ',
-        (user_id,))
+    if filter_params['filter_value'] is None:
+        raise BadRequest('filter value is None')
+
+    filter_type = filter_params['filter_type']
+
+    # Lookup the registered filter using the filter type and execute it 
+    results = rci_filter.RCI_FILTERS[filter_type](filter_params) 
 
     rcis = []
 
-    for res in results:
-        rcis.append(get_full_rci_document(res['rci_id']))
+    for rci_id in results:
+        rcis.append(get_full_rci_document(rci_id))
 
-    return rcis
-
-def get_building_rcis(building_name):
-    """
-    Get all the rcis for the building `building_name`
-    """
-    t = datastore.query(
-        'select * '
-        'from rooms '
-        'where building_name = ? '
-        'limit 1', 
-        (building_name,),
-        one=True
-    )
-
-    if t is None:
-        raise BadRequest('building {} does not exist'.format(building_name))
-
-
-    results = datastore.query(
-        'select * '
-        'from rcis '
-        'where building_name = ? ',
-        (building_name,)
-    )
-
-    rcis = []
-
-    for res in results:
-        rcis.append(get_full_rci_document(res['rci_id']))
-
-    return rcis
+    return rcis 
 
 
 def post_rci(user_id, building_name, room_name):
@@ -197,14 +159,6 @@ def post_rci(user_id, building_name, room_name):
     Multiple rcis can exist for the same room
     """
     new_rci_id = str(uuid.uuid4())
-
-    # First check that the room exists
-    room = get_room_record(building_name=building_name,
-                           room_name=room_name)
-
-    if room is None:
-        raise BadRequest('room {}{} does not exist'
-                         .format(building_name, room_name))
 
     rci_insert_args = {
         'rci_id': new_rci_id, 
@@ -238,7 +192,6 @@ def lock_rci(rci_id, user):
     """
     Freeze an rci, preventing it from being modified
     """
-
     # First check if the rci exists
     rci = get_rci_record(rci_id)
 
@@ -295,7 +248,7 @@ def delete_rci(rci_id, user):
     if rci is None:
         raise BadRequest('rci {} does not exist'.format(rci_id))
 
-    # You can only delete an rci if one of the following
+    # You can only delete an rci if you areone of the following
     # (a) a collaborator on that rci OR
     # (b) a user with permission to MODERATE_RCIS
     if (user_can(Permission.MODERATE_RCIS, user)):

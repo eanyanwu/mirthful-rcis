@@ -67,8 +67,10 @@ def flask_client():
 
     client.testing = True
 
-    # We also define some convenience methods `login_as` and `logout` on
-    # this client.
+    # We also define some convenience methods 
+    # We do it here because the closure allows us to use the
+    # `client` object without requiring the callees of these methods
+    # to pass it in
     def login_as(user):
         response = client.post(
             '/login',
@@ -89,7 +91,11 @@ def flask_client():
         building_name = room['building_name']
 
         response = client.post(
-            '/api/building/{}/room/{}/rci'.format(building_name, room_name)
+            '/api/rcis',
+            json={
+                'room_name': room_name,
+                'building_name': building_name
+            }
         )
 
         return response

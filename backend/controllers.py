@@ -1,5 +1,6 @@
 import rcicore as core
 import authentication as auth
+import rci_filter
 from app import app
 from custom_exceptions import Unauthorized, BadRequest
 
@@ -9,6 +10,9 @@ from flask import request
 from flask import g
 
 # ROUTING 
+
+
+## LOGIN
 
 @app.route('/login', methods=['POST'])
 def login_user():
@@ -55,17 +59,18 @@ def logout_user():
 
 @app.route('/api/rooms', methods=['GET'])
 @auth.login_required
-def get_building_manifest():
+def get_rooms():
     return create_json_response(data=core.get_building_manifest(), status_code=200)
 
 
 @app.route('/api/rooms/areas', methods=['GET'])
+@auth.login_required
 def get_room_areas():
-    pass
+    return create_json_response(data=core.get_room_areas(), status_code=200)
 
-# RCIS
+## RCIS
 
-@app.route('/api/rci/<uuid:rci_id>', methods=['GET'])
+@app.route('/api/rcis/<uuid:rci_id>', methods=['GET'])
 @auth.login_required
 def get_rci(rci_id):
     """
@@ -74,57 +79,68 @@ def get_rci(rci_id):
 
     rci = core.get_rci(str(rci_id))
     
-    return create_json_response(rci, 200)
+    return create_json_response(data=rci, status_code=200)
 
-
-@app.route('/api/user/<uuid:user_id>/rcis', methods=['GET'])
+@app.route('/api/rcis', methods=['GET'])
 @auth.login_required
-def get_user_rcis(user_id):
+def get_rcis():
     """
-    Return all the rcis for which the specified user is a collaborator
+    Return a list of rcis that match the filter that was passed in
     """
-    user_id = str(user_id)
+    query_params = request.args
 
-    rcis = core.get_user_rcis(user_id)
+    if query_params is None:
+        raise BadRequest('No filter parameters were defined!')
 
-    return create_json_response(data=rcis, status_code=200)
+    filter_type = query_params.get('filter_type')
+    filter_values = query_params.getlist('filter_value')
 
-
-@app.route('/api/buildings/<string:bldg>/rcis', methods=['GET'])
-@auth.login_required
-def get_building_rcis(bldg):
-    """
-    Return all the rcis for the specified building
-    """
-
-    user = g.get('user')
-
-    rcis = core.get_building_rcis(building_name=bldg)
-
-    return create_json_response(data=rcis, status_code=200)
-
-
-@app.route(
-    '/api/building/<string:building>/room/<string:room>/rci',
-    methods=['POST'])
-@auth.login_required
-def post_rci(building, room):
-    """
-    Create an empty Rci Document for a room
-
-    No authorization is needed here because any logged in user should
-    be able to do this
-    """
-    user = g.get('user')
+    if filter_type is None:
+        raise BadRequest('No filter type was defined!')
     
-    new_rci = core.post_rci(user_id=user['user_id'],
-                            building_name=building,
-                            room_name=room)
+    filter_type = rci_filter.RciFilterType[filter_type]
+
+    filter_params = {
+        'filter_type': filter_type,
+        'filter_value': filter_values
+    }
+
+    rcis = core.get_rcis(filter_params)
+
+    return create_json_response(data=rcis, status_code=200) 
+
+
+@app.route('/api/rcis', methods=['POST'])
+@auth.login_required
+def post_rci():
+    """
+    Create a new rci document
+    """
+    user_id = g.get('user')['user_id']
+
+    # Get posted data
+    request_data = request.get_json()  
+
+    if request_data is None:
+        raise BadRequest('no data was sent with the request to create rci')
+
+    building_name = request_data.get('building_name', None)
+    room_name = request_data.get('room_name', None)
+
+    if room_name is None:
+        raise BadRequest('room name not provided in request')
+
+    if building_name is None:
+        raise BadRequest('building name not provided in request')
+
+    new_rci = core.post_rci(user_id=user_id, 
+                            building_name=building_name, 
+                            room_name=room_name)
 
     return create_json_response(new_rci, 200, {}) 
 
 
-@app.route('/api/rci/<uuid:rci_id>', methods=['DELETE'])
+@app.route('/api/rcis/<uuid:rci_id>', methods=['DELETE'])
 @auth.login_required
 def delete_rci(rci_id):
     """
@@ -139,13 +155,14 @@ def delete_rci(rci_id):
     return create_json_response(status_code=200)
 
 
-@app.route('/api/rci/<uuid:rci_id>/lock', methods=['POST'])
+@app.route('/api/rcis/<uuid:rci_id>/lock', methods=['POST'])
 @auth.login_required
 def lock_rci(rci_id):
     """
     Freeze the rci to prevent it from being modified further
     """
     user = g.get('user')
+
     rci_id = str(rci_id)
 
     core.lock_rci(rci_id, user)
@@ -153,13 +170,14 @@ def lock_rci(rci_id):
     return create_json_response(status_code=200)
 
 
-@app.route('/api/rci/<uuid:rci_id>/lock', methods=['DELETE'])
+@app.route('/api/rcis/<uuid:rci_id>/lock', methods=['DELETE'])
 @auth.login_required
 def unlock_rci(rci_id):
     """
     Unlock an rci -- allowing it to be modified
     """
     user = g.get('user')
+
     rci_id = str(rci_id)
 
     core.unlock_rci(rci_id, user)
@@ -169,7 +187,7 @@ def unlock_rci(rci_id):
 
 ## DAMAGES
 
-@app.route('/api/rci/<uuid:rci_id>/damage', methods=['POST'])
+@app.route('/api/rcis/<uuid:rci_id>/damages', methods=['POST'])
 @auth.login_required
 def post_damage(rci_id):
     """
@@ -197,7 +215,7 @@ def post_damage(rci_id):
     return create_json_response(damage, 200)
 
 
-@app.route('/api/rci/<uuid:rci_id>/damage/<uuid:damage_id>', methods=['DELETE'])
+@app.route('/api/rcis/<uuid:rci_id>/damages/<uuid:damage_id>', methods=['DELETE'])
 @auth.login_required
 def delete_damage(rci_id, damage_id):
     """
