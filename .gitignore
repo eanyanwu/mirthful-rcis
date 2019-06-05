@@ -4,6 +4,13 @@
 
 # Database files ~ we don't want to version these
 *.db
+*.sqlite
+
+
+###############
+# FLASK RELATED 
+###############
+instance/
 
 ################
 # PYTHON RELATED

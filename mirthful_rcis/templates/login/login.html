@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}Rci Form Login{% endblock %}
+
+{% block css %}<link rel="stylesheet" href="{{ url_for('static', filename='login.css') }}" /> {% endblock %}
+
+{% block body %}
+<header>
+    <h1>Rci Form Login</h1>
+</header>
+
+<main>    
+    <form id="login-form" action="/login" method="post">
+        <label for="username">Username</label>
+        <input id="username" name="username" type="text" value="{{ error.username }}"/>
+
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" value="{{ error.password }}"/>
+        
+        <output for="username password" name="login-error">{{ error.message }}</output>
+        <button type="submit">Login</button>
+    </form>
+</main>
+{% endblock %}

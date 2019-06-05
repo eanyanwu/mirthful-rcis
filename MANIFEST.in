@@ -1,0 +1,2 @@
+recursive-include mirthful_rcis *.html *.js *.css 
+recursive-include mirthful_rcis *.sql
