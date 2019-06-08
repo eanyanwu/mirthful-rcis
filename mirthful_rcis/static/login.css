@@ -1,26 +1,38 @@
 body {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    grid-template-rows: 1fr 1fr 1fr;
-}
-
-header {
-    grid-column-end: 4;
-    grid-column-start: 1;
-    grid-row-end: 2;
-    grid-row-start: 1;
     text-align: center;
 }
 
-main {
-    box-shadow: 0px 0px 5px 0px rgba(0,0,0,0.5);
-    padding: 10px 10px;
-    grid-column-end: 3;
-    grid-column-start: 2;
-    grid-row-end: 3;
-    grid-row-start: 2;
+header {
+    height: 20%;
 }
 
-main * {
+main {
+    height: 60%;
+    margin: 0 auto;
+    padding: 10px 10px;
+    text-align: left;
+    width: 80%;
+}
+
+fieldset {
+    border: none;
+}
+
+legend {
+    font-weight: 600;
+}
+
+label {
     display: block;
 }
+
+footer {
+    height: 20%;
+}
+
+.username,
+.password {
+    border: 1px solid;
+    border-radius: 0px;
+}
+

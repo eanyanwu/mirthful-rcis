@@ -1,10 +1,23 @@
 {% extends 'base.html' %}
 
-{% block title %}Rci Dashboard - {{ user.username }} {% endblock %}
+{% block title %}Rci Dashboard - {{ g.user.username }} {% endblock %}
+
+{% block css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}" />
+{% endblock %}
 
 {% block body %}
+<nav>
+    <a href="{{ url_for('rcis.new') }}">+ New Rci </a>
+    <a href="{{ url_for('login.logout') }}">+ Logout </a>
+</nav>
+
 <main>
-    Dashboard for {{ user.role }} 
+    <ul>
+        {% for rci in rcis %}
+        <li>{{ rci.building_name }}: {{ rci.room_name }}</li>
+        {% endfor %}
+    </ul>
 </main>
 
 

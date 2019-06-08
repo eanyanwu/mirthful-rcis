@@ -1,5 +1,4 @@
 import mirthful_rcis.datastore as datastore
-import mirthful_rcis.rci_filter as datastore 
 from mirthful_rcis.authorization import Permission 
 from mirthful_rcis.authorization import user_can
 from mirthful_rcis.custom_exceptions import BadRequest, Unauthorized
@@ -48,6 +47,16 @@ def get_rci_collaborators(rci_id):
         (rci_id,))
 
 
+def get_users():
+    """
+    Fetches all users
+    """
+    return datastore.query(
+        'select * '
+        'from users '
+    )
+
+
 def get_full_rci_document(rci_id):
     """
     Creates a complete rci document that includes
@@ -89,7 +98,6 @@ def get_damages_for_rci(rci_id):
         (rci_id,))
 
 
-# Rooms 
 def get_building_manifest():
     """
     Return a summary of the building layout.
@@ -116,7 +124,7 @@ def get_room_areas():
 
 def get_rci(rci_id): 
     """
-    Fetch an rci document
+    Fetch an rci document by id
     """
     rci = get_full_rci_document(rci_id)
 
@@ -125,31 +133,48 @@ def get_rci(rci_id):
 
     return rci 
 
-def get_rcis(filter_params):
+def get_user_rcis(user_id):
     """
-    Fetch a list of rci documents according to the filter
+    Fetch the rcis for the specified user
     """
-
-    if filter_params['filter_type'] is None:
-        raise BadRequest('filter type is None')
-
-    if filter_params['filter_value'] is None:
-        raise BadRequest('filter value is None')
-
-    filter_type = filter_params['filter_type']
-
-    # Lookup the registered filter using the filter type and execute it 
-    results = rci_filter.RCI_FILTERS[filter_type](filter_params) 
+    rci_ids = [ 
+        x['rci_id'] 
+        for x in datastore.query(
+            'select rci_id '
+            'from rci_collabs '
+            'where user_id = ?', (user_id,))
+    ]
 
     rcis = []
 
-    for rci_id in results:
+    for rci_id in rci_ids:
         rcis.append(get_full_rci_document(rci_id))
 
-    return rcis 
+    return rcis
+
+def get_building_rcis(buildings):
+    """
+    Fetch the rcis for the specified buildings
+    """
+    rci_ids = [
+        x['rci_id']
+        for x in datastore.query(
+            'select rci_id '
+            'from rcis '
+            'where building_name in ({})'
+            .format(', '.join('?' for i in buildings)),
+            buildings)
+    ]
+
+    rcis = []
+
+    for rci_id in rci_ids:
+        rcis.append(get_full_rci_document(rci_id))
+
+    return rcis
 
 
-def post_rci(user_id, building_name, room_name):
+def create_rci(user_id, building_name, room_name):
     """
     Creates a new rci record for a room.
 
@@ -270,7 +295,7 @@ def delete_rci(rci_id, user):
         (rci_id,))
 
 
-def post_damage(user, rci_id, item, text, image_url):
+def create_damage(user, rci_id, item, text, image_url):
     """
     Record a damage on the rci 
     """

@@ -1,24 +1,86 @@
 import mirthful_rcis.rcicore as core
 import mirthful_rcis.authentication as auth
-import mirthful_rcis.rci_filter as rci_filter
 from mirthful_rcis.custom_exceptions import Unauthorized, BadRequest
 
 import json
 import uuid
 from flask import Blueprint
-from flask import request
+from flask import redirect, render_template, request, url_for
 from flask import g
-from flask import render_template
 
 bp = Blueprint('rcis', __name__)
 
 # ROUTING 
 
-@bp.route('/dashboard')
+@bp.route('/', methods=['GET'])
 @auth.login_required
 def dashboard():
+    """
+    The dashboard always shows a list of rcis.
+    What rcis are listed depends on the user's role and settings
+
+    - student: only list rcis for which they are a collaborator
+
+    - res_life_staff and admin: list all rcis by building. If building
+      preferences have been set, use those to filter 
+    """
+
     user = g.get('user')
-    return render_template('rcis/dashboard.html', user=user)
+
+    rci_list = []
+
+    if user.get('role') == 'student':
+        rci_list = core.get_user_rcis(user_id=user['user_id'])
+
+        return render_template('rcis/dashboard.html', rcis=rci_list)
+
+    elif user.get('role') == 'admin' or user.get('role') == 'res_life_staff':
+        buildings = list(core.get_building_manifest().keys())
+        rci_list = core.get_building_rcis(buildings=buildings)
+
+        return render_template('rcis/dashboard.html', rcis=rci_list)
+
+
+@bp.route('/new', methods=['GET', 'POST'])
+@auth.login_required
+def new():
+    """
+    This view allows for creating a new rci
+    """
+    if request.method == 'GET':
+        users = core.get_users()
+        building_manifest = core.get_building_manifest() 
+
+        return render_template('rcis/new.html',
+                               building_manifest=building_manifest,
+                               users=users)
+
+    user_id = request.form['user_id']
+    room = {
+        'building_name': request.form['room'].split('||')[0],
+        'room_name': request.form['room'].split('||')[1]
+    }
+
+    rci = core.create_rci(user_id=user_id,
+                          building_name=room['building_name'],
+                          room_name=room['room_name'])
+
+    return redirect(url_for('rcis.edit', rci_id=rci['rci_id']))
+
+
+@bp.route('/edit/<uuid:rci_id>', methods=['GET', 'POST'])
+@auth.login_required
+def edit(rci_id):
+    """
+    The view for editing the contents of an rci document
+    """
+    rci_id = str(rci_id)
+
+    if request.method == 'GET':
+        rci = core.get_full_rci_document(rci_id)
+        return render_template('rcis/edit.html', rci=rci)
+
+
 
 @bp.route('/api/rooms', methods=['GET'])
 @auth.login_required

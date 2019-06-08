@@ -10,15 +10,26 @@
 </header>
 
 <main>    
-    <form id="login-form" action="/login" method="post">
-        <label for="username">Username</label>
-        <input id="username" name="username" type="text" value="{{ error.username }}"/>
+    <form id="login-form" action="{{ url_for('login.login') }}" method="post">
+        <fieldset>
+            <legend>Sign In</legend>
 
-        <label for="password">Password</label>
-        <input id="password" name="password" type="password" value="{{ error.password }}"/>
+            <div>
+                <label for="username">Username</label>
+                <input id="username" name="username" type="text" value="{{ error.username }}"/>
+            </div>
+
+            <div>
+                <label for="password">Password</label>
+                <input id="password" name="password" type="password" value="{{ error.password }}"/>
+            </div>
+
+        </fieldset>
         
         <output for="username password" name="login-error">{{ error.message }}</output>
         <button type="submit">Login</button>
     </form>
 </main>
+<footer>
+</footer>
 {% endblock %}

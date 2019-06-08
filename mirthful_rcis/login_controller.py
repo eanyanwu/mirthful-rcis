@@ -26,12 +26,8 @@ def login():
         return render_template('login/login.html', error={})
 
     # If not, this is an attempt to login
-    try :
-        username = request.form['username']
-        password = request.form['password']
-    except KeyError:
-        # TODO: Probably want to handle exceptions somehow, deal with this.
-        raise BadRequest('username or password missing')
+    username = request.form['username']
+    password = request.form['password']
 
     if auth.validate(username, password):
         session_id = auth.start_session(username)
@@ -50,3 +46,16 @@ def login():
 
         return render_template('login/login.html', error=error)
 
+
+@bp.route('/logout', methods=['GET'])
+@auth.login_required
+def logout():
+    """
+    Logout the existing user by deleting their session from the database
+    """
+
+    rci_session = request.cookies.get('session')
+
+    auth.end_session(rci_session)
+
+    return redirect(url_for('login.login'))
