@@ -13,24 +13,8 @@ body {
 
 /* Typography */
 html {
-    font-size: 62.5%;
-}
-
-body {
-    font-size: 1.35em;
+    font-size: 1.1em;
     line-height: 1.618;
-}
-
-@media (min-width: 382px) {
-    body {
-        font-size: 1.53em;
-    }
-}
-
-@media (min-width: 684px) {
-    body {
-        font-size: 1.8em;
-    }
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -44,3 +28,5 @@ h3 { font-size: 1.75em; }
 h4 { font-size: 1.50em; }
 h5 { font-size: 1.25em; }
 h6 { font-size: 1.00em; }
+
+

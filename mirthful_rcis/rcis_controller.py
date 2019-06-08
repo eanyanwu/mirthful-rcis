@@ -47,25 +47,50 @@ def new():
     """
     This view allows for creating a new rci
     """
-    if request.method == 'GET':
-        users = core.get_users()
-        building_manifest = core.get_building_manifest() 
+    building_manifest = core.get_building_manifest() 
+    users = core.get_users()
 
-        return render_template('rcis/new.html',
+    if request.method == 'GET':
+
+        return render_template('rcis/new_rci_building_select.html',
                                building_manifest=building_manifest,
                                users=users)
 
-    user_id = request.form['user_id']
-    room = {
-        'building_name': request.form['room'].split('||')[0],
-        'room_name': request.form['room'].split('||')[1]
-    }
+    # Get the form contents
+    user_id = request.form.get('user_id', None)
+    building_name = request.form.get('building_name', None)
+    room_name = request.form.get('room_name', None)
 
-    rci = core.create_rci(user_id=user_id,
-                          building_name=room['building_name'],
-                          room_name=room['room_name'])
 
-    return redirect(url_for('rcis.edit', rci_id=rci['rci_id']))
+    # Can't create rci just yet, missing info...
+    if user_id is None or building_name is None :
+        return render_template('rcis/new_rci_building_select.html',
+                               building_manifest=building_manifest,
+                               users=users)
+
+    # Can't create rci just yet, missing info..
+    elif room_name is None:
+        user = core.get_user_record(user_id)
+        new_rci = {
+            'user_id': user_id,
+            'firstname': user['firstname'],
+            'lastname': user['lastname'],
+            'building_name': building_name,
+            'rooms': [ 
+                x['room_name'] for x in building_manifest[building_name]
+            ]
+        }
+
+        return render_template('rcis/new_rci_room_select.html',
+                               new_rci=new_rci)
+
+    # We have all the information we need, create the rci...
+    else:
+        rci = core.create_rci(user_id=user_id,
+                          building_name=building_name,
+                          room_name=room_name)
+
+        return redirect(url_for('rcis.edit', rci_id=rci['rci_id']))
 
 
 @bp.route('/edit/<uuid:rci_id>', methods=['GET', 'POST'])

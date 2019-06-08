@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block body %}
+
+{% include "header.html" %}
+
+<main>
+    <form id="new-rci-form" action="{{ url_for('rcis.new') }}" method="post">
+        <input type="text" disabled value="{{ new_rci.firstname }} {{ new_rci.lastname }}" />
+        <input type="text" disabled value="{{ new_rci.building_name }}" />
+
+        <label for="room">Select Room:</label>
+        <select class="component-select" id="room" name="room_name">
+            {% for room in new_rci.rooms %}
+            <option value="{{ room }}">{{ room }}</option>
+            {% endfor %}
+        </select>
+
+        <button class="component-button" type="submit">Create</button>
+
+        <input type="text" hidden name="user_id" value="{{ new_rci.user_id }}" />
+        <input type="text" hidden name="building_name" value="{{ new_rci.building_name }}" />
+    </form>
+</main>
+
+{% endblock %}

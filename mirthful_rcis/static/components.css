@@ -1,15 +1,41 @@
-/* Button */
+/* Button 
+ * 
+ * Class applies to <button> and <a> elements 
+ * */
 .component-button {
+    background-color: #fff;
     border: 1px solid rgba(0,0,0,0.5);
     color: inherit;
+    cursor: pointer;
     display: block;
     font-size: 1.1em;
+    line-height: 1.6;
     padding: 5px 25px;
     text-decoration: none;
-    text-decoration-line: none;
 }
 
-/* Picture Links */
+/* Select Element 
+ *
+ * Class applies to the <select> element 
+ */
+.component-select {
+    background-color: #fff;
+    border: 1px solid rgba(0,0,0,0.5);
+    display: block;
+    font-size: inherit;
+    padding: 5px 25px;
+    width: 100%;
+}
+
+.component-select > option {
+    margin: 0;
+    padding: 0;
+}
+
+/* Picture Links 
+ *
+ * Class applies to <a> elemtns that wrap a div and a span
+ */
 .component-picture-link {
     align-items: center;
     display: flex;
@@ -31,7 +57,10 @@
     margin-left: 15px;
 }
 
-/* Rci Cards */
+/* Rci Cards 
+ *
+ * Class applies to a <div> element with 3 spans within
+ */
 .component-rci-card {
     box-shadow: 0 0 10px 0 #ddd;
     margin: 25px 10px;

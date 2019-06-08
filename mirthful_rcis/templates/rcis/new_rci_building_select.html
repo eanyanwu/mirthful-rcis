@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block body %}
+
+{% include "header.html" %}
+
+<main>
+    <form id="new-rci-form" action="{{ url_for('rcis.new') }}" method="post">
+        {# If the user is a student, they can only create an rci for themselves #}
+        {% if g.user['role'] == 'student' %}
+        <label>User:</label>
+        <input type="text" hidden name="user_id" value="{{ g.get('user')['user_id'] }}"/>
+        <input type="text" disabled value="{{ g['user']['firstname'] }} {{ g['user']['lastname'] }}" />
+
+        {# staff and admin can create rcis for others #}
+        {% else %}
+        <label for"user">User:</label>
+        <select class="component-select" id="user" name="user_id">
+            {% for user in users %}
+            <option value="{{ user.user_id }}">
+            {{ user.firstname }} {{ user.lastname }} - {{ user.username }}
+            </option>
+            {% endfor %}
+        </select>
+        {% endif %}
+
+        <label for="building">Select Building:</label>
+        <select class="component-select" id="building" name="building_name">
+            {% for building in building_manifest.keys() %}
+            <option value="{{ building }}">{{ building }}</option>
+            {% endfor %}
+        </select>
+
+        <button class="component-button" type="submit">Continue</button>
+    </form>
+</main>
+
+{% endblock %}

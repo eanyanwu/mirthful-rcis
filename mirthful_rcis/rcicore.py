@@ -6,6 +6,14 @@ from mirthful_rcis.custom_exceptions import BadRequest, Unauthorized
 import uuid
 from datetime import datetime, timedelta
 
+def get_user_record(user_id):
+    return datastore.query(
+        'select * from users '
+        'where user_id = ? '
+        'limit 1', (user_id,),
+        one=True
+    )
+
 def get_rci_record(rci_id):
     """
     Useful method for quickly figuring out if an rci exists
