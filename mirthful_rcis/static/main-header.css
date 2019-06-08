@@ -1,0 +1,26 @@
+/* All styles for the re-usable "main-header.html" section should go here */
+
+#main-header {
+    margin-bottom: 40px; /* Put some space between the header and everthin else */
+}
+
+#main-header > section {
+    align-items: center;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    padding: 25px 10px; 
+}
+
+#logo {
+    border: 1px solid;
+    height: 60px;
+    width: 60px;
+}
+
+hr {
+    color: rgba(0,0,0,0.15);
+    margin: 0 auto;
+    width: 72%;
+}

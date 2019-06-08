@@ -10,7 +10,8 @@ def get_db():
     A new one is created if it does not exist
     """
     if 'db' not in g:
-        g.db = sqlite3.connect(current_app.config['DATABASE'])
+        g.db = sqlite3.connect(current_app.config['DATABASE'],
+                               detect_types=sqlite3.PARSE_DECLTYPES)
         g.db.row_factory = dict_factory
 
     return g.db

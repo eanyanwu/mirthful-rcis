@@ -68,7 +68,7 @@ def get_full_rci_document(rci_id):
         raise BadRequest('no such rci {}'.format(rci_id))
 
     rci_collaborators = datastore.query(
-        'select u.user_id, u.username, u.role '
+        'select u.* '
         'from rci_collabs as rc '
         'inner join users as u '
         'using(user_id) '
@@ -189,7 +189,7 @@ def create_rci(user_id, building_name, room_name):
         'rci_id': new_rci_id, 
         'room_name': room_name,
         'building_name': building_name,
-        'created_at': datetime.utcnow().isoformat(),
+        'created_at': datetime.utcnow()
     }
 
     rci_collab_insert_args = {
@@ -334,7 +334,7 @@ def create_damage(user, rci_id, item, text, image_url):
         'text': text,
         'image_url': image_url,
         'user_id': user['user_id'],
-        'created_at': datetime.utcnow().isoformat()
+        'created_at': datetime.utcnow()
     }
     
     datastore.query(

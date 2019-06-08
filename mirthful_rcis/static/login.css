@@ -1,9 +1,9 @@
-body {
-    text-align: center;
-}
-
 header {
+    display: flex;
+    flex-direction: column;
     height: 20%;
+    justify-content: center;
+    align-items: center;
 }
 
 main {

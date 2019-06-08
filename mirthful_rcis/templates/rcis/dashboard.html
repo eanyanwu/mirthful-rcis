@@ -7,17 +7,33 @@
 {% endblock %}
 
 {% block body %}
-<nav>
-    <a href="{{ url_for('rcis.new') }}">+ New Rci </a>
-    <a href="{{ url_for('login.logout') }}">+ Logout </a>
-</nav>
 
+{% include "header.html" %}
 <main>
-    <ul>
+    <section id="actions-section">
+            <a class="reset-link component-picture-link" href="{{ url_for('rcis.new') }}">
+                <div></div>
+                <span>NEW RCI</span>
+            </a>
+    </section>
+    <section>
         {% for rci in rcis %}
-        <li>{{ rci.building_name }}: {{ rci.room_name }}</li>
+        <div class="component-rci-card">
+            <span>{{ rci.building_name }} {{ rci.room_name }}</span>
+            {# Common Area with multiple collaborators #}
+            {% if rci.collaborators|length > 1 %}
+            <span>Common Area</span>
+            {# Individual Rci with one collaborator #}
+            {% else %}
+            <span>
+                {{ rci.collaborators[0]['firstname'] }} 
+                {{ rci.collaborators[0]['lastname'] }}
+            </span>
+            {% endif %}
+            <span>{{ rci.created_at.strftime("%B %d, %Y") }}</span>
+        </div>
         {% endfor %}
-    </ul>
+    </section>
 </main>
 
 

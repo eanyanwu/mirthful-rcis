@@ -19,6 +19,8 @@ VALUES ('admin', 'Residence Life Director', 4);
 INSERT INTO users 
 VALUES ('32151344-dfa6-4e70-89b1-140d756c0079',
     'test_student',
+    'John',
+    'Riley',
     'test',
     'test_student',
     'student');
@@ -26,6 +28,8 @@ VALUES ('32151344-dfa6-4e70-89b1-140d756c0079',
 INSERT INTO users
 VALUES ('fcd02d33-ca85-4246-ab66-25cb67188360',
     'test_staff',
+    'Libbie',
+    'Wamble',
     'test',
     'test_staff',
     'res_life_staff');

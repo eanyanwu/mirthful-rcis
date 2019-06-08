@@ -6,6 +6,8 @@ html, body {
     overflow-x: hidden;
 }
 
+/* Eric Meyers' css reset */
+
 html, body, div, span, applet, object, iframe,
 h1, h2, h3, h4, h5, h6, blockquote, pre,
 a, abbr, acronym, address, big, cite, code,
@@ -41,18 +43,22 @@ ol, ul {
 	list-style: none;
 }
 
-blockquote, q {
-	quotes: none;
+hr {
+    margin: 0;
+    padding: 0;
 }
 
-blockquote:before, blockquote:after,
-q:before, q:after {
-	content: '';
-	content: none;
+
+.reset-link
+{
+    display: inline-block;
+    text-decoration: none;
 }
 
-table {
-	border-collapse: collapse;
-	border-spacing: 0;
+.reset-link,
+.reset-link:link,
+.reset-link:visited,
+.reset-link:active {
+    color:inherit;
 }
 

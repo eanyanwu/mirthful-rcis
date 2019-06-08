@@ -27,6 +27,8 @@ CREATE TABLE roles(
 CREATE TABLE users (
     user_id TEXT PRIMARY KEY,
     username TEXT NOT NULL,
+    firstname TEXT NOT NULL,
+    lastname TEXT NOT NULL,
     salt TEXT NOT NULL,
     password TEXT NOT NULL,
     role TEXT NOT NULL,
@@ -50,7 +52,7 @@ CREATE TABLE rcis (
     rci_id TEXT PRIMARY KEY,
     building_name TEXT NOT NULL,
     room_name TEXT NOT NULL,
-    created_at TEXT NOT NULL,
+    created_at TIMESTAMP NOT NULL,
     is_locked INTEGER NOT NULL DEFAULT 0,
 
     FOREIGN KEY(building_name, room_name)
@@ -73,7 +75,7 @@ CREATE TABLE damages (
     text TEXT NOT NULL,
     image_url TEXT,
     user_id TEXT NOT NULL,
-    created_at TEXT NOT NULL,
+    created_at TIMESTAMP NOT NULL,
 
     FOREIGN KEY(rci_id) REFERENCES rcis(rci_id) ON DELETE CASCADE,
     FOREIGN KEY(user_id) REFERENCES users(user_id) ON DELETE CASCADE
