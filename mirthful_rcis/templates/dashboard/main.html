@@ -12,14 +12,14 @@
 
 <main>
     <section id="actions-section">
-            <a class="reset-link component-picture-link" href="{{ url_for('rcis.new') }}">
+            <a class="reset-link component-picture-link" href="{{ url_for('rci.new') }}">
                 <div></div>
                 <span>NEW RCI</span>
             </a>
     </section>
     <section>
         {% for rci in rcis %}
-        <div class="component-rci-card">
+        <a class="reset-link component-rci-card" href="{{ url_for('rci.edit', rci_id=rci.rci_id) }}">
             <span>{{ rci.building_name }} {{ rci.room_name }}</span>
             {# Common Area with multiple collaborators #}
             {% if rci.collaborators|length > 1 %}
@@ -32,7 +32,7 @@
             </span>
             {% endif %}
             <span>{{ rci.created_at.strftime("%B %d, %Y") }}</span>
-        </div>
+        </a>
         {% endfor %}
     </section>
 </main>

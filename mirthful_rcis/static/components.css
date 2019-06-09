@@ -59,7 +59,7 @@
 
 /* Rci Cards 
  *
- * Class applies to a <div> element with 3 spans within
+ * Class applies to any `display: block` element with 3 spans within
  */
 .component-rci-card {
     box-shadow: 0 0 10px 0 #ddd;

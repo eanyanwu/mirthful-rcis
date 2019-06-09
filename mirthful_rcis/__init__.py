@@ -1,5 +1,56 @@
+import click
 import os
-from flask import Flask
+from flask import (
+    g,
+    Flask,
+    current_app
+)
+from flask.cli import with_appcontext
+
+def close_db(e=None):
+    """
+    Close the connection to the database if it exists
+    """
+    db = g.pop('db', None)
+
+    if db is not None:
+        db.close()
+
+
+def initialize_database():
+    """
+    Setup database schema and test data
+    """
+    db = get_db()
+
+    with current_app.open_resource('sql/bootstrap_db.sql') as f:
+        db.executescript(f.read().decode('utf8'))
+
+    with current_app.open_resource('sql/schema.sql') as f:
+        db.executescript(f.read().decode('utf8'))
+
+
+@click.command('init-db')
+@with_appcontext
+def init_db_command():
+    """
+    Clear the existing data and create new tables
+    """
+    initialize_database()
+    click.echo('Initialized database.')
+
+def initialize_application(app):
+    """
+    Initialize the application by registering the `close_db` function to run on
+    request teardown.
+
+    Additionally, register cli commands
+    """
+    # Application teardown
+    app.teardown_appcontext(close_db)
+
+    # Cli commands
+    app.cli.add_command(init_db_command)
 
 
 def create_app(test_config=None):
@@ -17,20 +68,20 @@ def create_app(test_config=None):
         # load the test configuration
         app.config.from_mapping(test_config)
 
-
     # Ensure that the instance folder exists
     try:
         os.makedirs(app.instance_path)
     except OSError:
         pass
 
-    from mirthful_rcis import db
-    db.initialize_application(app)
+    initialize_application(app)
 
-    from mirthful_rcis import login_controller
-    from mirthful_rcis import rcis_controller
+    from mirthful_rcis.controllers import auth 
+    from mirthful_rcis.controllers import dashboard
+    from mirthful_rcis.controllers import rci
 
-    app.register_blueprint(login_controller.bp)
-    app.register_blueprint(rcis_controller.bp)
+    app.register_blueprint(auth.bp)
+    app.register_blueprint(dashboard.bp)
+    app.register_blueprint(rci.bp)
 
     return app

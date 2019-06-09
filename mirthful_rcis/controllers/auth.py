@@ -1,5 +1,9 @@
-import mirthful_rcis.authentication as auth
-from mirthful_rcis.custom_exceptions import BadRequest
+from mirthful_rcis.lib.authentication import (
+    login_required, 
+    validate,
+    start_session,
+    end_session
+)
 
 from flask import (
     Blueprint,
@@ -10,9 +14,7 @@ from flask import (
     url_for
 )
 
-bp = Blueprint('login', __name__)
-
-## LOGIN
+bp = Blueprint('auth', __name__)
 
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
@@ -23,16 +25,16 @@ def login():
     """
     # If this is a get request, just spit back the login form 
     if request.method == 'GET':
-        return render_template('login/login.html', error={})
+        return render_template('auth/login.html', error={})
 
     # If not, this is an attempt to login
     username = request.form['username']
     password = request.form['password']
 
-    if auth.validate(username, password):
-        session_id = auth.start_session(username)
+    if validate(username, password):
+        session_id = start_session(username)
 
-        response = make_response(redirect(url_for('rcis.dashboard')))
+        response = make_response(redirect(url_for('dashboard.main')))
 
         response.headers['Set-Cookie'] = 'session={}'.format(session_id)
 
@@ -44,11 +46,11 @@ def login():
             'password': password
         }
 
-        return render_template('login/login.html', error=error)
+        return render_template('auth/login.html', error=error)
 
 
 @bp.route('/logout', methods=['GET'])
-@auth.login_required
+@login_required
 def logout():
     """
     Logout the existing user by deleting their session from the database
@@ -56,6 +58,6 @@ def logout():
 
     rci_session = request.cookies.get('session')
 
-    auth.end_session(rci_session)
+    end_session(rci_session)
 
-    return redirect(url_for('login.login'))
+    return redirect(url_for('auth.login'))
