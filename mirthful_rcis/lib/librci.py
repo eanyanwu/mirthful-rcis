@@ -36,15 +36,22 @@ def get_rci_by_id(rci_id, full=False):
         (rci_id,))
 
     damages = datastore.query(
-        'select * '
-        'from damages '
+        'select d.*, u.firstname, u.lastname '
+        'from damages as d '
+        'inner join users as u '
+        'on d.created_by = u.user_id '
         'where rci_id =? ',
         (rci_id,))
+
+    damages_by_item = {}
+
+    for damage in damages:
+        damages_by_item.setdefault(damage['item'], []).append(damage)
 
     full_rci_doc = {
         'rci_id': rci_id,
         'collaborators': rci_collaborators,
-        'damages': damages,
+        'damages': damages_by_item,
         'room_name': rci['room_name'],
         'building_name': rci['building_name'],
         'created_at': rci['created_at'],

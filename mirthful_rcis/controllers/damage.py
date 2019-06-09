@@ -48,3 +48,20 @@ def new():
                             image_url=None)
 
     return redirect(url_for('rci.edit', rci_id=rci_id))
+
+@bp.route('/delete/<uuid:damage_id>', methods=['GET'])
+@login_required
+def delete(damage_id):
+    """
+    Deletes the damage with the given id
+    """
+    logged_in_user = g.user
+    damage_id = str(damage_id)
+
+    deleted_damage = libdamage.delete_damage(damage_id=damage_id, 
+                                             logged_in_user=logged_in_user)
+
+    rci_id = deleted_damage['rci_id']
+
+    return redirect(url_for('rci.edit', rci_id=rci_id))
+

@@ -15,13 +15,21 @@
             +New Damage
         </a>
     </section>
-    {{ rci }}
     <section>
         {%if rci.damages|length == 0 %}
         <p>No damages recorded.</p>
         {% else %}
-        {% for damage in rci.damages %}
-        <p> {{ damage }} </p>
+        {% for item in rci.damages.keys() %}
+        <div class="component-rci-damage-card">
+            <span> {{ item }} </span>
+            {% for damage in rci.damages[item] %}
+            <div>
+                <span> {{ damage.text }} </span>
+                <span> -- by {{ damage.firstname }} {{ damage.lastname }}</span>
+                <a href="{{ url_for('damage.delete', damage_id=damage.damage_id) }}">Remove</a>
+            </div>
+            {% endfor %}
+        </div>
         {% endfor %}
         {% endif %}
     </section>
