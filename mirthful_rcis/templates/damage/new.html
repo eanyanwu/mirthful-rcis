@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}New Damage {% endblock %}
+
+{% block body %}
+
+{% include "header.html" %}
+
+<main>
+    <form action="{{ url_for('damage.new') }}" method="post">
+        <label for="room-area">Room Area:</label>
+        <input id="room-area"
+               name="item"
+               type="text" 
+               list="room-area-suggestions" 
+               placeholder="Start typing for suggestions..." 
+               autofocus
+               required />
+
+        <label for="damage-description">What's up with it:</label>
+        <textarea id="damage-description"
+                  name="text"
+                  required></textarea>
+
+        <button class="component-button" type="submit">Add</button>
+        
+
+        <datalist id="room-area-suggestions">
+            {% for area in room_areas %}
+            <option value="{{ area }}" />
+            {% endfor %}
+        </datalist>
+
+        <input hidden name="user_id" value="{{ user_id }}" />
+        <input hidden name="rci_id" value="{{ rci_id }}" />
+    </form>
+</main>
+
+{% endblock %}

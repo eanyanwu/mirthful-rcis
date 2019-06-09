@@ -13,7 +13,7 @@ from mirthful_rcis.lib.exceptions import (
 import uuid
 from datetime import datetime, timedelta
 
-def create_damage(user, rci_id, item, text, image_url):
+def create_damage(logged_in_user, rci_id, item, text, image_url):
     """
     Record a damage on the rci 
     """
@@ -31,15 +31,15 @@ def create_damage(user, rci_id, item, text, image_url):
     # Check that the user is one of the following
     # (a) a collaborator on the rci OR
     # (b) has Permission.MODERATE_DAMAGES
-    if (user_can(Permission.MODERATE_DAMAGES, user)):
+    if (user_can(Permission.MODERATE_DAMAGES, logged_in_user)):
         pass
     else:
         rci_collaborators = [
             x['user_id'] 
-            for x in get_rci_collaborators(rci_id) 
+            for x in common.get_rci_collaborators(rci_id) 
         ]
 
-        if user['user_id'] not in rci_collaborators:
+        if logged_in_user['user_id'] not in rci_collaborators:
             raise Unauthorized('You cannot record damage on this rci.' 
                                'Please ask to be added to the list of '
                                'collaborators')
@@ -51,14 +51,14 @@ def create_damage(user, rci_id, item, text, image_url):
         'item': item,
         'text': text,
         'image_url': image_url,
-        'user_id': user['user_id'],
+        'created_by': logged_in_user['user_id'],
         'created_at': datetime.utcnow()
     }
     
     datastore.query(
         'insert into '
-        'damages(damage_id, rci_id, item, text, image_url, user_id, created_at) '
-        'values(:damage_id,:rci_id,:item,:text,:image_url,:user_id,:created_at) ',
+        'damages(damage_id, rci_id, item, text, image_url, created_by, created_at) '
+        'values(:damage_id,:rci_id,:item,:text,:image_url,:created_by,:created_at) ',
         damage_insert_args)
 
     return common.get_damage_record(damage_insert_args['damage_id'])
@@ -86,7 +86,7 @@ def delete_damage(rci_id, damage_id, user):
     else:
         rci_collaborators = [
             x['user_id'] 
-            for x in get_rci_collaborators(rci_id) 
+            for x in common.get_rci_collaborators(rci_id) 
         ]
 
         if user['user_id'] not in rci_collaborators:

@@ -14,16 +14,6 @@ import uuid
 from datetime import datetime, timedelta
 
 
-def get_rci_collaborators(rci_id):
-    """
-    List the collaborators for an rci
-    """
-    return datastore.query(
-        'select * ' 
-        'from rci_collabs '
-        'where rci_id = ?',
-        (rci_id,))
-
 
 def get_rci_by_id(rci_id, full=False):
     """
@@ -130,7 +120,8 @@ def create_rci(user_id, building_name, room_name, logged_in_user):
         'rci_id': new_rci_id, 
         'room_name': room_name,
         'building_name': building_name,
-        'created_at': datetime.utcnow()
+        'created_at': datetime.utcnow(),
+        'created_by': logged_in_user['user_id']
     }
 
     rci_collab_insert_args = {
@@ -140,8 +131,10 @@ def create_rci(user_id, building_name, room_name, logged_in_user):
    
     # Create the rci document
     datastore.query(
-        'insert into rcis(rci_id, building_name, room_name, created_at) '
-        'values(:rci_id,:building_name,:room_name,:created_at)',
+        'insert into rcis '
+        '(rci_id, building_name, room_name, created_at, created_by) '
+        'values ' 
+        '(:rci_id,:building_name,:room_name,:created_at,:created_by)',
         rci_insert_args)
     
     # Add the user as an a collaborator for the rci
@@ -222,7 +215,7 @@ def delete_rci(rci_id, user):
     else:
         rci_collaborators = [
             x['user_id'] 
-            for x in get_rci_collaborators(rci_id)
+            for x in common.get_rci_collaborators(rci_id)
         ]
 
         if user['user_id'] not in rci_collaborators:

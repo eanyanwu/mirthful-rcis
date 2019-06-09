@@ -10,7 +10,7 @@ from flask import Blueprint
 from flask import redirect, render_template, request, url_for
 from flask import g
 
-bp = Blueprint('rci', __name__)
+bp = Blueprint('rci', __name__, url_prefix='/rci')
 
 @bp.route('/new', methods=['GET', 'POST'])
 @login_required
@@ -57,9 +57,12 @@ def new():
 
     # We have all the information we need, create the rci...
     else:
+        logged_in_user = g.get('user')
+
         rci = librci.create_rci(user_id=user_id,
-                          building_name=building_name,
-                          room_name=room_name)
+                                building_name=building_name,
+                                room_name=room_name,
+                                logged_in_user=logged_in_user)
 
         return redirect(url_for('rci.edit', rci_id=rci['rci_id']))
 

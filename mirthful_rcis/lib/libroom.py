@@ -15,7 +15,7 @@ def get_building_manifest():
     return manifest
 
 
-def get_room_areas():
+def get_default_room_areas():
     """
     Return the list of default room areas
     """

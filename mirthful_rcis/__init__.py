@@ -21,12 +21,14 @@ def initialize_database():
     """
     Setup database schema and test data
     """
+    from mirthful_rcis.dal.datastore import get_db
+
     db = get_db()
 
-    with current_app.open_resource('sql/bootstrap_db.sql') as f:
+    with current_app.open_resource('sql/schema.sql') as f:
         db.executescript(f.read().decode('utf8'))
 
-    with current_app.open_resource('sql/schema.sql') as f:
+    with current_app.open_resource('sql/bootstrap_db.sql') as f:
         db.executescript(f.read().decode('utf8'))
 
 
@@ -38,6 +40,7 @@ def init_db_command():
     """
     initialize_database()
     click.echo('Initialized database.')
+    
 
 def initialize_application(app):
     """
@@ -79,9 +82,11 @@ def create_app(test_config=None):
     from mirthful_rcis.controllers import auth 
     from mirthful_rcis.controllers import dashboard
     from mirthful_rcis.controllers import rci
+    from mirthful_rcis.controllers import damage
 
     app.register_blueprint(auth.bp)
     app.register_blueprint(dashboard.bp)
     app.register_blueprint(rci.bp)
+    app.register_blueprint(damage.bp)
 
     return app

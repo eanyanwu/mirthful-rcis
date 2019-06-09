@@ -9,6 +9,18 @@ def get_users():
         'select * '
         'from users ')
 
+
+def get_rci_collaborators(rci_id):
+    """
+    List the collaborators for an rci
+    """
+    return datastore.query(
+        'select * ' 
+        'from rci_collabs '
+        'where rci_id = ?',
+        (rci_id,))
+
+
 def get_user_record(user_id):
     user = datastore.query(
         'select * from users '

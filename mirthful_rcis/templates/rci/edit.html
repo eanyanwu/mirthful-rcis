@@ -7,6 +7,23 @@
 
 {% block body %}
 {% include "header.html" %}
-<p>Rci {{ rci.rci_id }} </p>
-<p> {{ rci }} </p>
+
+<main>
+    <section id="actions">
+        <a class="reset-link component-button"
+            href="{{ url_for('damage.new', rci_id=rci.rci_id, user_id=g.user['user_id']) }}">
+            +New Damage
+        </a>
+    </section>
+    {{ rci }}
+    <section>
+        {%if rci.damages|length == 0 %}
+        <p>No damages recorded.</p>
+        {% else %}
+        {% for damage in rci.damages %}
+        <p> {{ damage }} </p>
+        {% endfor %}
+        {% endif %}
+    </section>
+</main>
 {% endblock %}
