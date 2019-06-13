@@ -13,7 +13,8 @@ Yes!
 
 There is a live demo page here [ [link coming soon]() ]
 
-You can also set it up on your local computer:
+If you are curious, or want to mess with the code on your local machine, here are some instructions to get you started:
+
 1. Install [git](https://git-scm.com/), [python](https://www.python.org/downloads/) and pip. (pip usually comes bundled with python)
     - For linux users: you'll can probably get these items using your package manager.
 1. Install virtualenv using the following command `pip install virtualenv`
