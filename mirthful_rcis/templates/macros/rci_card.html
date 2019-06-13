@@ -1,0 +1,16 @@
+{% macro rci_card(rci) %}
+    <a class="reset-link component-rci-card" href="{{ url_for('rci.edit', rci_id=rci.rci_id) }}">
+        <span>{{ rci.building_name }} {{ rci.room_name }}</span>
+        {# Common Area with multiple collaborators #}
+        {% if rci.collaborators|length > 1 %}
+        <span>Common Area</span>
+        {# Individual Rci with one collaborator #}
+        {% else %}
+        <span>
+            {{ rci.collaborators[0]['firstname'] }} 
+            {{ rci.collaborators[0]['lastname'] }}
+        </span>
+        {% endif %}
+        <span>{{ rci.created_at.strftime("%B %d, %Y") }}</span>
+    </a>
+{% endmacro %}

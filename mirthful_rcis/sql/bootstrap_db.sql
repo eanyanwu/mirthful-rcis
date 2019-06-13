@@ -9,7 +9,7 @@ INSERT INTO roles (role, description, permissions)
 VALUES ('res_life_staff', 'Member of Residence Life Staff', 3);
 
 INSERT INTO roles (role, description, permissions)
-VALUES ('admin', 'Residence Life Director', 4);
+VALUES ('admin', 'Residence Life Director', 3);
 
 
 
@@ -34,6 +34,14 @@ VALUES ('fcd02d33-ca85-4246-ab66-25cb67188360',
     'test_staff',
     'res_life_staff');
 
+INSERT INTO users
+VALUES ('6a134499-3c0a-4f24-93c6-ac936508a0ff',
+    'test_admin',
+    'Clayton',
+    'Bernos',
+    'test',
+    'test_admin',
+    'admin');
 
 -- Rooms
 INSERT INTO rooms

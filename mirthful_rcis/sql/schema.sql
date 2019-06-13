@@ -9,6 +9,7 @@ DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS rooms;
 DROP TABLE IF EXISTS room_areas;
 DROP TABLE IF EXISTS rcis;
+DROP TABLE IF EXISTS  rci_index;
 DROP TABLE IF EXISTS rci_collabs;
 DROP TABLE IF EXISTS damages;
 DROP TABLE IF EXISTS room_areas;
@@ -65,6 +66,7 @@ CREATE TABLE rcis (
     REFERENCES users(user_id) ON DELETE SET DEFAULT
 );
 
+
 CREATE TABLE rci_collabs (
     rci_id TEXT NOT NULL,
     user_id TEXT NOT NULL,
@@ -75,6 +77,46 @@ CREATE TABLE rci_collabs (
     -- If the user is deleted, we can safely delete all his collaborations 
     FOREIGN KEY(user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
+
+-- Full-Text-Search index to use for the search functionality.
+CREATE VIRTUAL TABLE rci_index USING fts5(
+    rci_id UNINDEXED,
+    user_id UNINDEXED,
+    building_name,
+    room_name,
+    firstname, 
+    lastname
+);
+
+-- Triggers to keep the Full-Text-Search table up to date
+-- Note these triggers are for the rci_collabs table.
+-- An rci is not associated with anyone until an entry for said user has been added 
+-- to the rci_collabs table
+CREATE TRIGGER rci_index_ai AFTER INSERT ON rci_collabs
+BEGIN
+    INSERT INTO rci_index (rci_id, user_id, building_name, room_name, firstname, lastname)
+    SELECT r.rci_id AS rci_id,
+            u.user_id AS user_id,
+            r.building_name AS building_name,
+            r.room_name AS room_name, 
+            u.firstname AS firstname,
+            u.lastname AS lastname
+    FROM rci_collabs AS rc
+    INNER JOIN rcis AS r -- the rcis table has the room and building names
+    USING(rci_id)
+    INNER JOIN users as u -- the users table has the first and last name
+    USING(user_id)
+    WHERE r.rci_id = new.rci_id;
+END;
+
+CREATE TRIGGER rci_index_ad AFTER DELETE ON rci_collabs
+BEGIN
+    DELETE FROM rci_index
+    WHERE rci_id = old.rci_id and user_id = old.user_id;
+END;
+
+-- Note: We never perform update operations on the rci_collabs table, so no need for 
+-- a trigger
 
 CREATE TABLE damages (
     damage_id TEXT PRIMARY KEY,

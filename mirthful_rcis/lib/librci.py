@@ -101,6 +101,30 @@ def get_rcis_for_buildings(buildings):
 
     return rcis
 
+def search_rcis(search_string):
+    """
+    Performs a full-text-search for rcis using the rci_index table
+    """
+    # TODO: decide what kind of permissions one needs to search
+    
+    # If they did not have a search term, return an empty list
+    if search_string is None or search_string.strip() == "":
+        return []
+
+    search_results = datastore.query(
+        'select * '
+        'from rci_index '
+        'where rci_index = ?',
+        (search_string,))
+
+    rcis = []
+
+    for result in search_results:
+        rcis.append(get_rci_by_id(rci_id=result['rci_id'], full=True))
+
+    return rcis 
+
+
 
 def create_rci(user_id, building_name, room_name, logged_in_user):
     """

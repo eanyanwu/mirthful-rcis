@@ -1,0 +1,32 @@
+{% from 'macros/rci_card.html' import rci_card %}
+
+{% extends 'base.html' %}
+
+{% block title %}Rci Search {% endblock %}
+
+{% block css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}" />
+{% endblock %}
+
+{% block body %}
+
+{% include "header.html" %}
+
+<main>
+    <section id="actions-section">
+        <form action="{{ url_for('dashboard.search') }}" method="post">
+            <input name="search_string" 
+                   placeholder="Search Rcis..." 
+                   type="search" 
+                   value="{{ search_string }}" />
+        </form>
+    </section>
+
+    <section>
+        {% for rci in results %}
+        {{ rci_card(rci=rci) }}
+        {% endfor %}
+    </section>
+</main>
+
+{% endblock %}
