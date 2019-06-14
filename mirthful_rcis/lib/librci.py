@@ -80,6 +80,7 @@ def get_rcis_for_user(user_id):
 
     return rcis
 
+
 def get_rcis_for_buildings(buildings):
     """
     Fetch the rcis for the specified buildings
@@ -100,6 +101,7 @@ def get_rcis_for_buildings(buildings):
         rcis.append(get_rci_by_id(rci_id, full=True))
 
     return rcis
+
 
 def search_rcis(search_string):
     """

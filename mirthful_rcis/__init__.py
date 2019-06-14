@@ -1,11 +1,36 @@
 import click
 import os
+import sqlite3
 from flask import (
     g,
     Flask,
     current_app
 )
 from flask.cli import with_appcontext
+
+# Sqlite's Row factory works well, however, I REALLY
+# want to return my records as plain dictionaries.
+# Makes it easier to handle in any modules that use 
+# this module.
+# See https://docs.python.org/3/library/sqlite3.html#sqlite3.Connection.row_factory
+def dict_factory(cursor, row):
+    d = {}
+    for idx, col in enumerate(cursor.description):
+        d[col[0]] = row[idx]
+    return d
+
+
+def get_db():
+    """
+    Get a connection to the configured database
+    A new one is created if it does not exist
+    """
+    if 'db' not in g:
+        g.db = sqlite3.connect(current_app.config['DATABASE'],
+                               detect_types=sqlite3.PARSE_DECLTYPES)
+        g.db.row_factory = dict_factory
+
+    return g.db
 
 def close_db(e=None):
     """
@@ -19,17 +44,23 @@ def close_db(e=None):
 
 def initialize_database():
     """
-    Setup database schema and test data
+    Setup database schema 
     """
-    from mirthful_rcis.dal.datastore import get_db
-
     db = get_db()
 
     with current_app.open_resource('sql/schema.sql') as f:
         db.executescript(f.read().decode('utf8'))
 
+
+def populate_database_with_test_data():
+    """
+    Populates the already existing database with test data
+    """
+    db = get_db()
+
     with current_app.open_resource('sql/bootstrap_db.sql') as f:
         db.executescript(f.read().decode('utf8'))
+
 
 
 @click.command('init-db')
@@ -39,6 +70,7 @@ def init_db_command():
     Clear the existing data and create new tables
     """
     initialize_database()
+    populate_database_with_test_data()
     click.echo('Initialized database.')
     
 

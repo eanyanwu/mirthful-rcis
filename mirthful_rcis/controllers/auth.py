@@ -14,7 +14,7 @@ from flask import (
     url_for
 )
 
-bp = Blueprint('auth', __name__, '/auth')
+bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
