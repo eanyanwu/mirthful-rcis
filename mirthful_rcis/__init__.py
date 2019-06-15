@@ -30,6 +30,11 @@ def get_db():
                                detect_types=sqlite3.PARSE_DECLTYPES)
         g.db.row_factory = dict_factory
 
+        # Sqlite3 doesn't enable foreign keys by default.
+        # See 2nd secion of the following link:
+        # https://sqlite.org/foreignkeys.html
+        g.db.execute("pragma foreign_key = ON")
+
     return g.db
 
 def close_db(e=None):
@@ -122,3 +127,4 @@ def create_app(test_config=None):
     app.register_blueprint(damage.bp)
 
     return app
+

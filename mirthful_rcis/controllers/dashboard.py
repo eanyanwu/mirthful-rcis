@@ -9,7 +9,7 @@ from flask import (
     request
 )
 
-bp = Blueprint('dashboard', __name__)
+bp = Blueprint('dashboard', __name__) 
 
 @bp.route('/', methods=['GET'])
 @login_required
@@ -24,6 +24,8 @@ def main():
     
     - admin: additional actions
     """
+
+    print('DO WE EVEN GET HERE')
 
     logged_in_user = g.user
 

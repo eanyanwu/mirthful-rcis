@@ -27,11 +27,6 @@ class DbTransaction:
         self.connection = get_db()
         cursor = self.connection.cursor()
 
-        # Sqlite3 doesn't enable foreign keys by default.
-        # See 2nd secion of the following link:
-        # https://sqlite.org/foreignkeys.html
-        cursor.execute('pragma foreign_keys = ON')
-
         return cursor 
 
     def __exit__(self, *args):

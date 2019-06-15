@@ -34,7 +34,8 @@ CREATE TABLE users (
     password TEXT NOT NULL,
     role TEXT NOT NULL,
     
-    FOREIGN KEY (role) REFERENCES roles(role)
+    FOREIGN KEY (role) REFERENCES roles(role),
+    CONSTRAINT unique_username UNIQUE (username)
 );
 
 CREATE TABLE rooms(

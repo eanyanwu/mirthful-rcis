@@ -36,7 +36,7 @@ def login():
 
         response = make_response(redirect(url_for('dashboard.main')))
 
-        response.headers['Set-Cookie'] = 'session={}'.format(session_id)
+        response.headers['Set-Cookie'] = 'session={}; Path=/'.format(session_id)
 
         return response
     else:

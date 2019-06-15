@@ -10,6 +10,7 @@ def test_login_logout(auth, dashboard):
 
     assert response.headers['Set-Cookie'] is not None
     assert 'session=' in response.headers['Set-Cookie']
+    assert 'Path=/' in response.headers['Set-Cookie']
 
     response = auth.logout()
 

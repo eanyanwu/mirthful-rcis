@@ -1,6 +1,8 @@
 from mirthful_rcis.dal import datastore
 from mirthful_rcis.lib.exceptions import RecordNotFound
 
+import uuid
+
 def get_users():
     """
     Fetches all users
@@ -29,7 +31,7 @@ def get_user_record(user_id):
         one=True)
     
     if user is None:
-        raise RecordNotFound()
+        raise RecordNotFound('No such user {}'.format(user_id))
     else:
         return user
 
@@ -42,7 +44,7 @@ def get_rci_record(rci_id):
         one=True)
 
     if rci is None:
-        raise RecordNotFound()
+        raise RecordNotFound('No such rci {}'.format(rci_id))
     else:
         return rci
 
@@ -56,8 +58,21 @@ def get_damage_record(damage_id):
         one=True)
 
     if damage is None:
-        raise RecordNotFound()
+        raise RecordNotFound('No such damage {}'.format(damage_id))
     else:
         return damage
 
 
+def is_uuid(thing):
+    """
+    Is `thing` a UUID?
+    """
+
+    if thing is None:
+        return False 
+
+    try:
+        uuid.UUID(thing)
+        return True 
+    except:
+        return False 

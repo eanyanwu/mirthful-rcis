@@ -1,5 +1,10 @@
 from mirthful_rcis.dal import datastore
-from mirthful_rcis.lib import common
+from mirthful_rcis.lib.common import (
+    get_rci_record,
+    get_user_record,
+    get_rci_collaborators,
+    is_uuid
+)
 from mirthful_rcis.lib.authorization import (
     Permission,
     user_can
@@ -13,16 +18,20 @@ from mirthful_rcis.lib.exceptions import (
 import uuid
 from datetime import datetime, timedelta
 
+def throw_if_not_valid_uuid(id):
+    if is_uuid(id):
+        pass
+    else:
+        raise ValueError('{} is not a valid id'.format(id))
 
 
 def get_rci_by_id(rci_id, full=False):
     """
     Fetch an rci
     """
-    try:
-        rci = common.get_rci_record(rci_id)
-    except RecordNotFound:
-        raise BadRequest('No such rci {}'.format(rci_id))
+    throw_if_not_valid_uuid(rci_id)
+
+    rci = get_rci_record(rci_id)
 
     if not full:
         return rci
@@ -36,9 +45,12 @@ def get_rci_by_id(rci_id, full=False):
         (rci_id,))
 
     damages = datastore.query(
-        'select d.*, u.firstname, u.lastname '
+        'select '
+        'd.*, '
+        'coalesce(u.firstname, \'DELETED\') as firstname, '
+        'coalesce(u.lastname, \'USER\') as lastname '
         'from damages as d '
-        'inner join users as u '
+        'left join users as u '
         'on d.created_by = u.user_id '
         'where rci_id =? ',
         (rci_id,))
@@ -65,6 +77,11 @@ def get_rcis_for_user(user_id):
     """
     Fetch the rcis for the specified user
     """
+
+    throw_if_not_valid_uuid(user_id)
+
+    user = get_user_record(user_id)
+
     rci_ids = [ 
         x['rci_id'] 
         for x in datastore.query(
@@ -186,7 +203,7 @@ def lock_rci(rci_id, user):
     """
     # First check if the rci exists
     try:
-        rci = common.get_rci_record(rci_id)
+        rci = get_rci_record(rci_id)
     except RecordNotFound:
         raise BadRequest('Rci {} does not exist'.format(rci_id))
 
@@ -211,7 +228,7 @@ def unlock_rci(rci_id, user):
 
     # First check if the rci exists
     try:
-        rci = common.get_rci_record(rci_id)
+        rci = get_rci_record(rci_id)
     except RecordNotFound:
         raise BadRequest('Rci {} does not exist'.format(rci_id))
 
@@ -236,7 +253,7 @@ def delete_rci(rci_id, user):
 
     # First check that the rci exists
     try:
-        rci = common.get_rci_record(rci_id)
+        rci = get_rci_record(rci_id)
     except RecordNotFound:
         raise BadRequest('Rci {} does not exist'.format(rci_id))
 
@@ -248,7 +265,7 @@ def delete_rci(rci_id, user):
     else:
         rci_collaborators = [
             x['user_id'] 
-            for x in common.get_rci_collaborators(rci_id)
+            for x in get_rci_collaborators(rci_id)
         ]
 
         if user['user_id'] not in rci_collaborators:
