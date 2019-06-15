@@ -37,7 +37,8 @@ def app():
 
     # Give up control. `app` is ready to be used by whatever test uses this
     # fixture
-    yield app
+    with app.app_context():
+        yield app
 
     # dispose of the temporary file.
     os.close(file_handle)

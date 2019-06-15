@@ -130,6 +130,10 @@ def search_rcis(search_string):
     if search_string is None or search_string.strip() == "":
         return []
 
+    # Quote the search string. See https://sqlite.org/fts5.html
+    # Not doing this would treat the hyphen character `-` as a column modifier
+    search_string = '"{}"'.format(search_string)
+
     search_results = datastore.query(
         'select * '
         'from rci_index '

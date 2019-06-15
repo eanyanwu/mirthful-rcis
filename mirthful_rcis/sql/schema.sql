@@ -85,8 +85,12 @@ CREATE VIRTUAL TABLE rci_index USING fts5(
     user_id UNINDEXED,
     building_name,
     room_name,
+    username,
     firstname, 
-    lastname
+    lastname,
+    -- The `-` and `_` characters should also be recognized as tokens instead of separators.
+    -- Why? Tests and people who have names with hyphens
+    tokenize = "unicode61 tokenchars'-_'"
 );
 
 -- Triggers to keep the Full-Text-Search table up to date
@@ -95,11 +99,12 @@ CREATE VIRTUAL TABLE rci_index USING fts5(
 -- to the rci_collabs table
 CREATE TRIGGER rci_index_ai AFTER INSERT ON rci_collabs
 BEGIN
-    INSERT INTO rci_index (rci_id, user_id, building_name, room_name, firstname, lastname)
+    INSERT INTO rci_index (rci_id, user_id, building_name, room_name, username, firstname, lastname)
     SELECT r.rci_id AS rci_id,
             u.user_id AS user_id,
             r.building_name AS building_name,
             r.room_name AS room_name, 
+            u.username AS username,
             u.firstname AS firstname,
             u.lastname AS lastname
     FROM rci_collabs AS rc
