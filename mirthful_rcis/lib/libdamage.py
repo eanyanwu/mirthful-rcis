@@ -70,7 +70,7 @@ def delete_damage(damage_id, logged_in_user):
 
     # Cannot delete a damage if the rci is locked
     if rci['is_locked']:
-        raise BadRequest('rci {} is locked'.format(rci_id))
+        raise Unauthorized('rci {} is locked'.format(rci_id))
 
     # Check that the user is one of the following
     # (a) a collaborator on the rci OR
