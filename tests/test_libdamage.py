@@ -157,7 +157,3 @@ def test_delete_damage_BUT_rci_is_locked(app,
                                     logged_in_user=user)
 
         assert 'is locked' in str(e)
-
-
-
-    

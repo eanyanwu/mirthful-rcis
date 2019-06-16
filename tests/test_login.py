@@ -5,8 +5,9 @@ from datetime import timedelta
 
 # Test that login sets the cookie
 # Test that logout deletes the session and redirects 
-def test_login_logout(auth, dashboard):
-    response = auth.login()
+def test_login_logout(auth, dashboard, user):
+    response = auth.login(username=user['username'],
+                          password=user['password'])
 
     assert response.headers['Set-Cookie'] is not None
     assert 'session=' in response.headers['Set-Cookie']

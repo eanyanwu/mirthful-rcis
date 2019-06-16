@@ -32,7 +32,6 @@ def app():
     # Setup the database 
     with app.app_context():
         initialize_database()
-        populate_database_with_test_data()
 
 
     # Give up control. `app` is ready to be used by whatever test uses this
@@ -179,6 +178,18 @@ def room_factory(app):
         return room
 
     return _make_room
+
+@pytest.fixture
+def room_area_factory(app):
+    def _make_room_area(name):
+        with app.app_context():
+            db = get_db()
+            room_area = _create_room_area(db_connection=db,
+                                          name=name)
+
+        return room_area
+    
+    return _make_room_area
 
 
 def _create_room(db_connection, building_name, room_name):
@@ -351,5 +362,27 @@ def _create_damage(db_connection,
         (damage_id,))
 
     return results.fetchone()
+
+def _create_room_area(db_connection, name):
+    insert_args = {
+        'room_area_name': name,
+        'room_area_description': name
+    }
+
+    db_connection.execute(
+        'insert into room_areas (room_area_name, room_area_description) '
+        'values (:room_area_name,:room_area_description) ',
+        insert_args)
+
+    db_connection.commit()
+
+    result = db_connection.execute(
+        'select * '
+        'from room_areas '
+        'where room_area_name = ?',
+        (name,))
+
+    return result.fetchone()
+
 
 
