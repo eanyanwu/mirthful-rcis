@@ -27,7 +27,7 @@ If you are curious, or want to mess with the code on your local machine, here ar
    - Mac/Linux: `source venv/bin/activate`
 1. Install the project dependencies: `pip install Flask pytest`
 1. Start the local development server:
-    - Windows: Coming soon...
+    - Windows: `.\flask_run.bat`
     - Mac/Linux: `./flask_run.sh`
 
    
