@@ -30,10 +30,10 @@ def get_db():
                                detect_types=sqlite3.PARSE_DECLTYPES)
         g.db.row_factory = dict_factory
 
-        # Sqlite3 doesn't enable foreign keys by default.
-        # See 2nd secion of the following link:
-        # https://sqlite.org/foreignkeys.html
-        g.db.execute("pragma foreign_key = ON")
+    # Sqlite3 doesn't enable foreign keys by default.
+    # See 2nd secion of the following link:
+    # https://sqlite.org/foreignkeys.html
+    g.db.execute("PRAGMA foreign_keys = ON;")
 
     return g.db
 

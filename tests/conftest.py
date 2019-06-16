@@ -37,8 +37,7 @@ def app():
 
     # Give up control. `app` is ready to be used by whatever test uses this
     # fixture
-    with app.app_context():
-        yield app
+    yield app
 
     # dispose of the temporary file.
     os.close(file_handle)
@@ -57,9 +56,58 @@ def auth(client):
 def dashboard(client):
     return DashboardActions(client)
 
+
+class AuthenticationActions():
+    def __init__(self, client):
+        self._client = client
+
+    def login(self, username='test_student', password='test_student'):
+        return self._client.post(
+            '/auth/login',
+            data={'username':username, 'password':password}
+        )
+
+    def logout(self):
+        return self._client.get('/auth/logout')
+
+class DashboardActions():
+    def __init__(self, client):
+        self._client = client
+
+    def main(self):
+        return self._client.get('/')
+
+
 @pytest.fixture
-def rci(app, rci_factory):
+def user(user_factory):
+    return user_factory()
+
+
+@pytest.fixture
+def rci(rci_factory):
     return rci_factory()
+
+@pytest.fixture
+def room(room_factory):
+    return room_factory()
+
+@pytest.fixture
+def user_factory(app):
+    def _make_user(user_role='student'):
+        random_string = str(uuid.uuid4())
+
+        with app.app_context():
+            db_connection = get_db()
+            username = 'username_{}'.format(random_string)
+            password = 'password_{}'.format(random_string)
+
+            return _create_user(db_connection=db_connection, 
+                                username=username,
+                                password=password,
+                                role=user_role)
+
+    return _make_user
+
 
 @pytest.fixture
 def rci_factory(app):
@@ -73,9 +121,10 @@ def rci_factory(app):
         damage_item = 'item_{}'.format(id)
         damage_text = 'text_{}'.format(id)
         damage_url = 'http://url_{}'.format(id)
-
+    
         with app.app_context():
             db = get_db()
+
             user = _create_user(db,
                                 username=username,
                                 password=password,
@@ -100,13 +149,29 @@ def rci_factory(app):
                                         rci_id=rci['rci_id'],
                                         user_id=user['user_id'])
 
-            return rci
+        return rci
 
     return _make_rci
 
+@pytest.fixture
+def room_factory(app):
+    def _make_room():
+        random_id = str(uuid.uuid4())
+        
+        with app.app_context():
+            db = get_db()
+            room_name = 'room_{}'.format(random_id)
+            building_name = 'building_{}'.format(random_id)
+
+            room = _create_room(db_connection=db,
+                                building_name=building_name,
+                                room_name=room_name)
+        return room
+
+    return _make_room
+
 
 def _create_room(db_connection, building_name, room_name):
-
     insert_args = {
         'building_name': building_name,
         'room_name': room_name
@@ -251,24 +316,4 @@ def _create_damage(db_connection,
 
     return results.fetchone()
 
-
-class AuthenticationActions():
-    def __init__(self, client):
-        self._client = client
-
-    def login(self, username='test_student', password='test_student'):
-        return self._client.post(
-            '/auth/login',
-            data={'username':username, 'password':password}
-        )
-
-    def logout(self):
-        return self._client.get('/auth/logout')
-
-class DashboardActions():
-    def __init__(self, client):
-        self._client = client
-
-    def main(self):
-        return self._client.get('/')
 

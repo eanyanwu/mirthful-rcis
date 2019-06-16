@@ -34,7 +34,7 @@ CREATE TABLE users (
     password TEXT NOT NULL,
     role TEXT NOT NULL,
     
-    FOREIGN KEY (role) REFERENCES roles(role),
+    FOREIGN KEY(role) REFERENCES roles(role),
     CONSTRAINT unique_username UNIQUE (username)
 );
 
@@ -55,7 +55,7 @@ CREATE TABLE rcis (
     building_name TEXT NOT NULL,
     room_name TEXT NOT NULL,
     created_at TIMESTAMP NOT NULL,
-    created_by TEXT NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000',
+    created_by TEXT, 
     is_locked INTEGER NOT NULL DEFAULT 0,
 
     -- If the room is deleted, the rci doesn't mean much any longer and it should be safe to delete 
@@ -64,7 +64,7 @@ CREATE TABLE rcis (
 
     -- If the user is deleted, we still want to keep a record of the damages
     FOREIGN KEY (created_by)
-    REFERENCES users(user_id) ON DELETE SET DEFAULT
+    REFERENCES users(user_id) ON DELETE SET NULL 
 );
 
 
@@ -131,12 +131,12 @@ CREATE TABLE damages (
     text TEXT NOT NULL,
     image_url TEXT,
     created_at TIMESTAMP NOT NULL,
-    created_by TEXT NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000',
+    created_by TEXT, 
 
     -- If an rci is deleted, we have no more need for the damages recorded within
     FOREIGN KEY(rci_id) REFERENCES rcis(rci_id) ON DELETE CASCADE,
     -- If a user is deleted, we still want to keep track of damages they recorded
-    FOREIGN KEY(created_by) REFERENCES users(user_id) ON DELETE SET DEFAULT
+    FOREIGN KEY(created_by) REFERENCES users(user_id) ON DELETE SET NULL 
 );
 
 CREATE TABLE sessions (

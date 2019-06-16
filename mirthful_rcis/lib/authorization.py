@@ -9,12 +9,16 @@ def user_can(permissions, user):
 
     Throw if the user object does not have a permission attribute
     """
-    user_permissions = user.get('permissions', None)
+    user_permissions = datastore.query(
+        'select * '
+        'from roles '
+        'where role = ? ',
+        (user['role'],), one=True)
 
     if user_permissions is None:
         raise ValueError('user does not have permissions attribute') 
 
-    return user_permissions & permissions == permissions
+    return user_permissions['permissions'] & permissions == permissions
 
 
 class Permission(IntEnum):

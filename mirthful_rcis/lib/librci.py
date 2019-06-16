@@ -67,6 +67,7 @@ def get_rci_by_id(rci_id, full=False):
         'room_name': rci['room_name'],
         'building_name': rci['building_name'],
         'created_at': rci['created_at'],
+        'created_by': rci['created_by'],
         'is_locked': True if rci['is_locked'] == 1 else False
     }
 
@@ -205,11 +206,8 @@ def lock_rci(rci_id, user):
     """
     Freeze an rci, preventing it from being modified
     """
-    # First check if the rci exists
-    try:
-        rci = get_rci_record(rci_id)
-    except RecordNotFound:
-        raise BadRequest('Rci {} does not exist'.format(rci_id))
+    # We will fail with a clear error here if the rci doesn't exist
+    rci = get_rci_record(rci_id)
 
     # You can only lock an rci if 
     # you have permission to MODERATE_RCIS
@@ -229,12 +227,8 @@ def unlock_rci(rci_id, user):
     """
     Un-Freeze an rci, making it editable again 
     """
-
-    # First check if the rci exists
-    try:
-        rci = get_rci_record(rci_id)
-    except RecordNotFound:
-        raise BadRequest('Rci {} does not exist'.format(rci_id))
+    # We will fail with a clear error here if the rci doesn't exist
+    rci = get_rci_record(rci_id)
 
     # You can only unlock an rci if 
     # you have permission to MODERATE_RCIS
