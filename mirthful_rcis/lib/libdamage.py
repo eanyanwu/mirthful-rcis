@@ -17,16 +17,11 @@ def create_damage(logged_in_user, rci_id, item, text, image_url):
     """
     Record a damage on the rci 
     """
-
-    # Check that the rci exists
-    try:
-        rci = common.get_rci_record(rci_id)
-    except RecordNotFound:
-        raise BadRequest('Rci {} does not exist'.format(rci_id))
+    rci = common.get_rci_record(rci_id)
 
     # Cannot record a damage if the rci is locked
     if rci['is_locked']:
-        raise BadRequest('rci {} is locked'.format(rci_id))
+        raise Unauthorized('Rci {} is locked'.format(rci_id))
 
     # Check that the user is one of the following
     # (a) a collaborator on the rci OR
@@ -67,18 +62,9 @@ def delete_damage(damage_id, logged_in_user):
     """
     Delete a damage record
     """
+    damage = common.get_damage_record(damage_id)
 
-    # Check that the damage exists 
-    try:
-        damage = common.get_damage_record(damage_id)
-    except RecordNotFound:
-        raise BadRequest('Damage {} does not exist'.format(damage_id))
-
-    # Get the rci
-    try:
-        rci = common.get_rci_record(damage['rci_id'])
-    except RecordNotFound:
-        raise BadRequest('Rci {} does not exist'.format(damage['rci_id']))
+    rci = common.get_rci_record(damage['rci_id'])
 
     rci_id = rci['rci_id']
 

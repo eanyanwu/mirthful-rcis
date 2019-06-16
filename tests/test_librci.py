@@ -2,6 +2,7 @@ from mirthful_rcis import get_db
 from mirthful_rcis.dal.datastore import DbTransaction 
 from mirthful_rcis.lib import librci
 from mirthful_rcis.lib.exceptions import RecordNotFound, Unauthorized
+from mirthful_rcis.lib.authorization import Permission
 
 import pytest
 from uuid import uuid4
@@ -119,6 +120,7 @@ def test_get_rcis_for_buildings_BUT_building_does_not_exist(app):
     
     assert len(result) == 0
 
+
 def test_get_rcis_for_buildings(app, rci_factory):
     """
     Assert that trying to get rcis for a list of buildings works as expected
@@ -138,6 +140,7 @@ def test_get_rcis_for_buildings(app, rci_factory):
                                                     [building1, building2])
 
     assert len(results) == 2
+
 
 def test_search_rcis_BUT_invalid_input(app):
     """
@@ -183,93 +186,78 @@ def test_search_rcis(app, rci):
 
 def test_create_rci(app, user_factory, room):
     """
-    Assert that students cannot create an rci for someone other than
-    themselves.
-    Assert that admin and res_life_staff can create rcis for others
+    Assert that users without the MODERATE_RCIS permission cannot create an rci
+    for someone other than themselves.
+    Assert that users with the MODERATE_RCIS permission can create rcis for others
     """
-    student = user_factory(user_role='student')
-    res_life_staff = user_factory(user_role='res_life_staff')
-    admin = user_factory(user_role='admin')
+    user1 = user_factory() 
+    user2 = user_factory(permissions=Permission.MODERATE_RCIS)
 
     with app.app_context():
-        # student can create rci for themselves
-        rci = librci.create_rci(user_id=student['user_id'],
+        # user1 can create an rci for themselves
+        rci = librci.create_rci(user_id=user1['user_id'],
                           building_name=room['building_name'],
                           room_name=room['room_name'],
-                          logged_in_user=student)
+                          logged_in_user=user1)
 
-        assert rci['created_by'] == student['user_id']
+        assert rci['created_by'] == user1['user_id']
 
-        # student can't create rci for others
+        # user1 can't create an rci for someone else
         with pytest.raises(Unauthorized) as e:
-            librci.create_rci(user_id=res_life_staff['user_id'],
+            librci.create_rci(user_id=user2['user_id'],
                               building_name=room['building_name'],
                               room_name=room['room_name'],
-                              logged_in_user=student)
+                              logged_in_user=user1)
+
             assert 'do not have permissions' in str(e)
 
-        # res_life staff can create rci for someone else 
-        rci = librci.create_rci(user_id=student['user_id'],
+        # user2 can create rci for someone else 
+        rci = librci.create_rci(user_id=user1['user_id'],
                           building_name=room['building_name'],
                           room_name=room['room_name'],
-                          logged_in_user=res_life_staff)
+                          logged_in_user=user2)
 
-        assert rci['created_by'] == res_life_staff['user_id']
+        assert rci['created_by'] == user2['user_id']
 
-        # admin can create rci for somone else
-        rci = librci.create_rci(user_id=student['user_id'],
-                          building_name=room['building_name'],
-                          room_name=room['room_name'],
-                          logged_in_user=admin)
-
-        assert rci['created_by'] == admin['user_id']
 
 def test_lock_rci(app, rci_factory, user_factory):
     """
-    Assert that a student user cannot lock an rci
-    Assert that admins and res_life_staff can lock rcis
+    Assert that users without the MODERATE_RCIS permission cannot lock an rci
+    Assert that users with the MODERATE_RCIS permission can lock rcis
     """
-    student = user_factory(user_role='student')
-    res_life_staff = user_factory(user_role='res_life_staff')
-    admin = user_factory(user_role='admin')
+    user1 = user_factory() 
+    user2 = user_factory(permissions=Permission.MODERATE_RCIS)
 
     with app.app_context():
-        # student can't lock an rci 
+        # user1 can't lock an rci 
         with pytest.raises(Unauthorized) as e:
             librci.lock_rci(rci_id=rci_factory()['rci_id'],
-                            logged_in_user=student)
+                            logged_in_user=user1)
 
         assert 'You do not have sufficient permissions' in str(e)
 
-        # admin and res_life_staff can lock an rci
+        # user2 can lock an rci
         librci.lock_rci(rci_id=rci_factory()['rci_id'],
-                        logged_in_user=res_life_staff)
-
-        librci.lock_rci(rci_id=rci_factory()['rci_id'],
-                        logged_in_user=admin)
+                        logged_in_user=user2)
 
 
 def test_unlock_rci(app, rci_factory, user_factory):
     """
-    Assert that a student user cannot unlock an rci
-    Assert that admins and res_life_staff can unlock rcis
+    Assert that users without the MODERATE_RCIS permission cannot unlock an rci
+    Assert that users with the MODERATE_RCIS permission can unlock rcis
     """
 
-    student = user_factory(user_role='student')
-    res_life_staff = user_factory(user_role='res_life_staff')
-    admin = user_factory(user_role='admin')
+    user1 = user_factory() 
+    user2 = user_factory(permissions=Permission.MODERATE_RCIS)
 
     with app.app_context():
-        # student can't lock an rci 
+        # user1 can't unlock an rci 
         with pytest.raises(Unauthorized) as e:
             librci.unlock_rci(rci_id=rci_factory()['rci_id'],
-                            logged_in_user=student)
+                            logged_in_user=user1)
 
         assert 'You do not have sufficient permissions' in str(e)
 
-        # admin and res_life_staff can lock an rci
+        # user2 can unlock an rci
         librci.unlock_rci(rci_id=rci_factory()['rci_id'],
-                        logged_in_user=res_life_staff)
-
-        librci.unlock_rci(rci_id=rci_factory()['rci_id'],
-                        logged_in_user=admin)
+                        logged_in_user=user2)

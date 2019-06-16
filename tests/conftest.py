@@ -93,25 +93,30 @@ def room(room_factory):
 
 @pytest.fixture
 def user_factory(app):
-    def _make_user(user_role='student'):
+    def _make_user(permissions=0):
         random_string = str(uuid.uuid4())
+
 
         with app.app_context():
             db_connection = get_db()
+
             username = 'username_{}'.format(random_string)
             password = 'password_{}'.format(random_string)
+
+            role = _create_role(db_connection=db_connection,
+                                permissions=permissions)
 
             return _create_user(db_connection=db_connection, 
                                 username=username,
                                 password=password,
-                                role=user_role)
+                                role=role['role'])
 
     return _make_user
 
 
 @pytest.fixture
 def rci_factory(app):
-    def _make_rci(user_role='student'):
+    def _make_rci(locked=False):
         id = str(uuid.uuid4())
 
         username = 'username_{}'.format(id)
@@ -121,14 +126,18 @@ def rci_factory(app):
         damage_item = 'item_{}'.format(id)
         damage_text = 'text_{}'.format(id)
         damage_url = 'http://url_{}'.format(id)
+        is_locked = 1 if locked else 0
     
         with app.app_context():
             db = get_db()
 
+            role = _create_role(db, permissions=0)
+
             user = _create_user(db,
                                 username=username,
                                 password=password,
-                                role=user_role)
+                                role=role['role'])
+
             room = _create_room(db,
                                 room_name=room_name,
                                 building_name=building_name)
@@ -136,7 +145,8 @@ def rci_factory(app):
             rci = _create_rci(db,
                               building_name=building_name,
                               room_name=room_name,
-                              created_by=user['user_id'])
+                              created_by=user['user_id'],
+                              is_locked=is_locked)
 
             damage = _create_damage(db,
                                     rci_id=rci['rci_id'],
@@ -194,6 +204,30 @@ def _create_room(db_connection, building_name, room_name):
 
     return results.fetchone()
 
+def _create_role(db_connection, permissions):
+    role = 'role_{}'.format(uuid.uuid4())
+
+    insert_args = {
+        'role': role,
+        'description': 'A test role',
+        'permissions': permissions
+    }
+
+    db_connection.execute(
+        'insert into roles (role, description, permissions) '
+        'values (:role, :description, :permissions) ',
+        insert_args)
+
+    db_connection.commit()
+
+    results = db_connection.execute(
+        'select * '
+        'from roles '
+        'where role = ?',
+        (role,))
+
+    return results.fetchone()
+
 
 def _create_user(db_connection, username, password, role):
     user_id = str(uuid.uuid4())
@@ -229,7 +263,8 @@ def _create_user(db_connection, username, password, role):
 def _create_rci(db_connection,
                 building_name,
                 room_name,
-                created_by):
+                created_by,
+                is_locked):
 
     rci_id = str(uuid.uuid4())
     
@@ -238,14 +273,15 @@ def _create_rci(db_connection,
         'building_name': building_name,
         'room_name': room_name,
         'created_at': datetime.utcnow(),
-        'created_by': created_by 
+        'created_by': created_by,
+        'is_locked': is_locked
     }
 
     db_connection.execute(
         'insert into rcis '
-        '(rci_id, building_name, room_name, created_at, created_by) '
+        '(rci_id, building_name, room_name, created_at, created_by, is_locked) '
         'values '
-        '(:rci_id,:building_name,:room_name,:created_at,:created_by) ',
+        '(:rci_id,:building_name,:room_name,:created_at,:created_by,:is_locked) ',
         insert_args)
 
     db_connection.commit()
