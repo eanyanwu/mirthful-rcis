@@ -181,7 +181,7 @@ def test_search_rcis(app, rci):
         assert len(librci.search_rcis(collaborator['username'])) == 1
 
 
-def test_create_rci(app, client, user_factory, room):
+def test_create_rci(app, user_factory, room):
     """
     Assert that students cannot create an rci for someone other than
     themselves.
@@ -223,3 +223,53 @@ def test_create_rci(app, client, user_factory, room):
                           logged_in_user=admin)
 
         assert rci['created_by'] == admin['user_id']
+
+def test_lock_rci(app, rci_factory, user_factory):
+    """
+    Assert that a student user cannot lock an rci
+    Assert that admins and res_life_staff can lock rcis
+    """
+    student = user_factory(user_role='student')
+    res_life_staff = user_factory(user_role='res_life_staff')
+    admin = user_factory(user_role='admin')
+
+    with app.app_context():
+        # student can't lock an rci 
+        with pytest.raises(Unauthorized) as e:
+            librci.lock_rci(rci_id=rci_factory()['rci_id'],
+                            logged_in_user=student)
+
+        assert 'You do not have sufficient permissions' in str(e)
+
+        # admin and res_life_staff can lock an rci
+        librci.lock_rci(rci_id=rci_factory()['rci_id'],
+                        logged_in_user=res_life_staff)
+
+        librci.lock_rci(rci_id=rci_factory()['rci_id'],
+                        logged_in_user=admin)
+
+
+def test_unlock_rci(app, rci_factory, user_factory):
+    """
+    Assert that a student user cannot unlock an rci
+    Assert that admins and res_life_staff can unlock rcis
+    """
+
+    student = user_factory(user_role='student')
+    res_life_staff = user_factory(user_role='res_life_staff')
+    admin = user_factory(user_role='admin')
+
+    with app.app_context():
+        # student can't lock an rci 
+        with pytest.raises(Unauthorized) as e:
+            librci.unlock_rci(rci_id=rci_factory()['rci_id'],
+                            logged_in_user=student)
+
+        assert 'You do not have sufficient permissions' in str(e)
+
+        # admin and res_life_staff can lock an rci
+        librci.unlock_rci(rci_id=rci_factory()['rci_id'],
+                        logged_in_user=res_life_staff)
+
+        librci.unlock_rci(rci_id=rci_factory()['rci_id'],
+                        logged_in_user=admin)

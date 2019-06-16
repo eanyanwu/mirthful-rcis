@@ -202,7 +202,7 @@ def create_rci(user_id, building_name, room_name, logged_in_user):
     return get_rci_by_id(new_rci_id, full=True)
 
 
-def lock_rci(rci_id, user):
+def lock_rci(rci_id, logged_in_user):
     """
     Freeze an rci, preventing it from being modified
     """
@@ -211,8 +211,8 @@ def lock_rci(rci_id, user):
 
     # You can only lock an rci if 
     # you have permission to MODERATE_RCIS
-    if not user_can(Permission.MODERATE_RCIS, user):
-        raise Unauthorized('you do not have sufficient permissions '
+    if not user_can(Permission.MODERATE_RCIS, logged_in_user):
+        raise Unauthorized('You do not have sufficient permissions '
                            'to lock this rci')
 
     # Go ahead and lock it up
@@ -223,7 +223,7 @@ def lock_rci(rci_id, user):
         (rci_id,))
 
 
-def unlock_rci(rci_id, user):
+def unlock_rci(rci_id, logged_in_user):
     """
     Un-Freeze an rci, making it editable again 
     """
@@ -232,46 +232,13 @@ def unlock_rci(rci_id, user):
 
     # You can only unlock an rci if 
     # you have permission to MODERATE_RCIS
-    if not user_can(Permission.MODERATE_RCIS, user):
-        raise Unauthorized('you do not have sufficient permissions '
+    if not user_can(Permission.MODERATE_RCIS, logged_in_user):
+        raise Unauthorized('You do not have sufficient permissions '
                            'to unlock this rci')
 
     # Go ahead and unlock it up
     datastore.query(
         'update rcis '
         'set is_locked = 0 '
-        'where rci_id = ?',
-        (rci_id,))
-
-
-def delete_rci(rci_id, user):
-    """
-    Delete an rci document
-    """
-
-    # First check that the rci exists
-    try:
-        rci = get_rci_record(rci_id)
-    except RecordNotFound:
-        raise BadRequest('Rci {} does not exist'.format(rci_id))
-
-    # You can only delete an rci if you areone of the following
-    # (a) a collaborator on that rci OR
-    # (b) a user with permission to MODERATE_RCIS
-    if (user_can(Permission.MODERATE_RCIS, user)):
-        pass
-    else:
-        rci_collaborators = [
-            x['user_id'] 
-            for x in get_rci_collaborators(rci_id)
-        ]
-
-        if user['user_id'] not in rci_collaborators:
-            raise Unauthorized('You cannot delete this rci.' 
-                               'Please ask to be added to the list of '
-                               'collaborators')
-
-    datastore.query(
-        'delete from rcis '
         'where rci_id = ?',
         (rci_id,))
