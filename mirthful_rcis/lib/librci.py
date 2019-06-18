@@ -74,12 +74,22 @@ def get_rci_by_id(rci_id, full=False):
     return full_rci_doc 
 
 
-def get_rcis_for_user(user_id):
+def get_rcis_for_user(user_id, logged_in_user):
     """
-    Fetch the rcis for the specified user
+    Fetch the rcis for which the user `user_id` is a collaborator.
     """
 
     throw_if_not_valid_uuid(user_id)
+
+    # You can only lookup rcis for a user if
+    # 1 - That user is you OR 
+    # 2 - You have permissions to MODERATE_RCIS
+    if (user_can(Permission.MODERATE_RCIS, logged_in_user)):
+        pass
+    else:
+        if user_id != logged_in_user['user_id']:
+            raise Unauthorized('You do not have sufficient permissions '
+                               'to lookup rcis for someone else.')
 
     user = get_user_record(user_id)
 
@@ -99,10 +109,16 @@ def get_rcis_for_user(user_id):
     return rcis
 
 
-def get_rcis_for_buildings(buildings):
+def get_rcis_for_buildings(buildings, logged_in_user):
     """
     Fetch the rcis for the specified buildings
     """
+
+    # Only users that have the MODERATE_RCIS permission can do this
+    if not user_can(Permission.MODERATE_RCIS, logged_in_user):
+        raise Unauthorized('You do not have sufficient permissions '
+                           'to lookup rcis for a building.')
+
     rci_ids = [
         x['rci_id']
         for x in datastore.query(
@@ -121,11 +137,16 @@ def get_rcis_for_buildings(buildings):
     return rcis
 
 
-def search_rcis(search_string):
+def search_rcis(search_string, logged_in_user):
     """
     Performs a full-text-search for rcis using the rci_index table
     """
-    # TODO: decide what kind of permissions one needs to search
+
+    # Only those with the MODERATE_RCIS permission can do this
+    if not user_can(Permission.MODERATE_RCIS, logged_in_user):
+        raise Unauthorized('You do not have sufficient permissions '
+                           'to perform an rci search')
+
     
     # If they did not have a search term, return an empty list
     if search_string is None or search_string.strip() == "":
@@ -166,7 +187,7 @@ def create_rci(user_id, building_name, room_name, logged_in_user):
         pass
     else:
         if user_id != logged_in_user['user_id']:
-            raise Unauthorized('You do not have permissions'
+            raise Unauthorized('You do not have permissions '
                                'to create an rci for someone else.')
 
     new_rci_id = str(uuid.uuid4())

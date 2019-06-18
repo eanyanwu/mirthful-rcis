@@ -22,5 +22,7 @@ def user_can(permissions, user):
 
 
 class Permission(IntEnum):
+    NONE                = 0b00000000
     MODERATE_DAMAGES    = 0b00000001
     MODERATE_RCIS       = 0b00000010
+    MODERATE_SYSTEM     = 0b00000100

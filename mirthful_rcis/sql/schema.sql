@@ -6,6 +6,7 @@ PRAGMA foreign_keys = OFF;
 
 DROP TABLE IF EXISTS roles;
 DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS user_settings;
 DROP TABLE IF EXISTS rooms;
 DROP TABLE IF EXISTS room_areas;
 DROP TABLE IF EXISTS rcis;
@@ -36,6 +37,11 @@ CREATE TABLE users (
     
     FOREIGN KEY(role) REFERENCES roles(role),
     CONSTRAINT unique_username UNIQUE (username)
+);
+
+CREATE TABLE user_settings (
+    user_id TEXT PRIMARY KEY,
+    default_buildings TEXT
 );
 
 CREATE TABLE rooms(

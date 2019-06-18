@@ -80,23 +80,38 @@ def test_get_rci_by_id(app, rci):
     assert 'collaborators' not in rci
     assert 'damages' not in rci
 
-def test_get_rcis_for_user_BUT_user_id_is_invalid(app):
+def test_get_rcis_for_user_BUT_user_id_is_invalid(app, user_factory):
     """
     Assert that the right exceptions are thrown when given invalid data
     """
+    user = user_factory(permissions=Permission.MODERATE_RCIS)
+
     with app.app_context():
         with pytest.raises(RecordNotFound) as e1:
-            librci.get_rcis_for_user(str(uuid4()))
+            librci.get_rcis_for_user(user_id=str(uuid4()),
+                                     logged_in_user=user)
 
     with app.app_context():
         with pytest.raises(ValueError) as e2:
-            librci.get_rcis_for_user(uuid4())
+            librci.get_rcis_for_user(user_id=uuid4(),
+                                     logged_in_user=user)
 
     assert 'No such user' in str(e1)
     assert 'not a valid id' in str(e2)
 
+def test_get_rcis_for_user_BUT_user_is_not_a_collaborator(app, rci, user):
+    """
+    Assert that a user with no special permissions can't just lookup somone
+    else's rcis
+    """
+    with app.app_context():
+        with pytest.raises(Unauthorized) as e:
+            rcis = librci.get_rcis_for_user(user_id=rci['created_by'],
+                                            logged_in_user=user)
 
-def test_get_rcis_for_user(app, rci):
+        assert 'do not have sufficient permissions' in str(e)
+
+def test_get_rcis_for_user_WITH_user_being_a_collaborator(app, rci):
     """
     Assert that the function fetches the expected rci(s)
     The creator of the fixture rci is also a collaborator.
@@ -105,26 +120,67 @@ def test_get_rcis_for_user(app, rci):
     """
 
     with app.app_context():
-        rcis = librci.get_rcis_for_user(rci['created_by'])
+        db = get_db()
+        user = db.execute('select * from users where user_id = ?',
+                          (rci['created_by'],)).fetchone()
+
+        rcis = librci.get_rcis_for_user(user_id=rci['created_by'],
+                                        logged_in_user=user)
 
     assert len(rcis) == 1
     assert rcis[0]['rci_id'] == rci['rci_id']
 
 
-def test_get_rcis_for_buildings_BUT_building_does_not_exist(app):
+def test_get_rcis_for_user_WITH_user_having_MODERATE_RCIS_permissions(app,
+                                                                      user_factory,
+                                                                      rci):
+    """
+    A user with the MODERATE_RCIS permission can indeed lookup rcis for another
+    user apart from themselves
+    """
+
+    with app.app_context():
+        user = user_factory(permissions=Permission.MODERATE_RCIS)
+
+        rcis = librci.get_rcis_for_user(user_id=rci['created_by'],
+                                        logged_in_user=user)
+
+        assert len(rcis) == 1
+
+
+def test_get_rcis_for_buildings_BUT_building_does_not_exist(app, user_factory):
     """
     Assert that searching for invalid buildings yields no results
     """
     with app.app_context():
-        result = librci.get_rcis_for_buildings(buildings=['invalid-building'])
+        user = user_factory(permissions=Permission.MODERATE_RCIS)
+        result = librci.get_rcis_for_buildings(buildings=['invalid-building'],
+                                               logged_in_user=user)
     
     assert len(result) == 0
 
 
-def test_get_rcis_for_buildings(app, rci_factory):
+def test_get_rcis_for_buildings_BUT_user_has_no_permissions(app,
+                                                            user,
+                                                            rci):
+    with app.app_context():
+        with pytest.raises(Unauthorized) as e:
+            librci.get_rcis_for_buildings(buildings=[rci['building_name']],
+                                                     logged_in_user=user)
+
+        assert 'do not have sufficient permissions' in str(e)
+
+
+
+def test_get_rcis_for_buildings_WITH_user_having_MODERATE_RCIS_permission(app,
+                                                                          user_factory,
+                                                                          rci_factory):
     """
     Assert that trying to get rcis for a list of buildings works as expected
+    when the user has the MODERATE_RCIS permission
     """
+
+    user = user_factory(permissions=Permission.MODERATE_RCIS)
 
     rci1 = rci_factory()
     rci2 = rci_factory()
@@ -135,36 +191,58 @@ def test_get_rcis_for_buildings(app, rci_factory):
     # Just showing that these two buildings are different
     assert building1 != building2
 
+    buildings = [building1, building2]
+
     with app.app_context():
-        results = librci.get_rcis_for_buildings(buildings=
-                                                    [building1, building2])
+        results = librci.get_rcis_for_buildings(buildings=buildings,
+                                                logged_in_user=user)
 
     assert len(results) == 2
 
 
-def test_search_rcis_BUT_invalid_input(app):
+def test_search_rcis_BUT_invalid_input(app, user_factory):
     """
     Make sure that input such as `None` or an empty string don't blow up the
     search. 
     If the search function can't find anything, or make sense of the input, it
     should just return an empty list instead of raising an exception.
     """
+    user = user_factory(permissions=Permission.MODERATE_RCIS)
 
     with app.app_context():
-        result1 = librci.search_rcis(None)
-        result2 = librci.search_rcis("")
+        result1 = librci.search_rcis(search_string=None, logged_in_user=user)
+        result2 = librci.search_rcis(search_string="", logged_in_user=user)
 
     assert len(result1) == 0
     assert len(result2) == 0
 
 
-def test_search_rcis(app, rci):
+def test_search_rcis_BUT_user_does_not_have_permission(app,
+                                                       user,
+                                                       rci):
+    """
+    A basic user without the MODERATE_RCIS permission cannot search
+    """
+
+    with app.app_context():
+        with pytest.raises(Unauthorized) as e:
+            librci.search_rcis(search_string="",
+                               logged_in_user=user)
+        
+        assert 'do not have sufficient permissions' in str(e)
+
+
+def test_search_rcis_WITH_user_having_MODERATE_RCIS_permission(app,
+                                                               user_factory,
+                                                               rci):
     """
     After an rci has been created, we should be able to search for it
     by building name, room name, and by username of name of a collaborator
 
-    Also, verify that we can do partial searches using `*`
+    Searching can only be done if you have the MODERATE_RCIS permission
     """
+    user = user_factory(permissions=Permission.MODERATE_RCIS)
+
     room_name = rci['room_name']
     building_name = rci['building_name']
 
@@ -177,11 +255,16 @@ def test_search_rcis(app, rci):
             'where r.rci_id = ?',
             (rci['rci_id'],)).fetchone()
 
-        assert len(librci.search_rcis(room_name)) == 1
-        assert len(librci.search_rcis(building_name)) == 1
-        assert len(librci.search_rcis(collaborator['firstname'])) == 1
-        assert len(librci.search_rcis(collaborator['lastname'])) == 1
-        assert len(librci.search_rcis(collaborator['username'])) == 1
+        assert len(librci.search_rcis(search_string=room_name,
+                                      logged_in_user=user)) == 1
+        assert len(librci.search_rcis(search_string=building_name,
+                                      logged_in_user=user)) == 1
+        assert len(librci.search_rcis(search_string=collaborator['firstname'],
+                                      logged_in_user=user)) == 1
+        assert len(librci.search_rcis(search_string=collaborator['lastname'],
+                                      logged_in_user=user)) == 1
+        assert len(librci.search_rcis(search_string=collaborator['username'],
+                                      logged_in_user=user)) == 1
 
 
 def test_create_rci(app, user_factory, room):

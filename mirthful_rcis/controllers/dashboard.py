@@ -1,6 +1,14 @@
-from mirthful_rcis.lib import libroom 
-from mirthful_rcis.lib import librci
+from mirthful_rcis.lib import (
+    libroom,
+    librci,
+    libuser
+)
+
 from mirthful_rcis.lib.authentication import login_required
+
+from mirthful_rcis.lib.exceptions import (
+    Unauthorized
+)
 
 from flask import (
     Blueprint,
@@ -16,34 +24,43 @@ bp = Blueprint('dashboard', __name__)
 def main():
     """
     The "homepage". This is what a user sees when they first log-in.
-
-    - student: only list rcis for which they are a collaborator
-
-    - res_life_staff and admin: list all rcis by building. If building
-      preferences have been set, use those to filter 
-    
-    - admin: additional actions
     """
-
-    print('DO WE EVEN GET HERE')
-
     logged_in_user = g.user
 
-    rci_list = []
+    # 1 - Fetch user settings for default buildings the user can view.
+    #     1.1 If such a setting does not exist, default to all buildings
+    # 2 - Try to fetch the rcis for the list of buildings we have.
+    #     2.1 - If the call fails with `Unauthorized`, the user has no such access
+    #           Fetch their own rcis only
 
-    if logged_in_user['role'] == 'student':
-        rci_list = librci.get_rcis_for_user(user_id=logged_in_user['user_id'])
+    user_settings = libuser.get_user_settings(user_id=
+                                              logged_in_user['user_id'])
 
-        return render_template('dashboard/main.html', rcis=rci_list)
+    building_list = user_settings['default_buildings']
 
-    elif logged_in_user['role'] == 'res_life_staff':
-        buildings = list(libroom.get_building_manifest().keys())
-        rci_list = librci.get_rcis_for_buildings(buildings=buildings)
+    if building_list is None:
+        building_list = list(libroom.get_building_manifest().keys())
 
-        return render_template('dashboard/main.html', rcis=rci_list)
+    try:
+        rcis = librci.get_rcis_for_buildings(buildings=building_list,
+                                             logged_in_user=logged_in_user)
+    except Unauthorized:
+        rcis = librci.get_rcis_for_user(user_id=logged_in_user['user_id'],
+                                        logged_in_user=logged_in_user)
 
-    elif logged_in_user['role']  == 'admin':
-        return render_template('dashboard/admin.html')
+    
+    user_permissions = libuser.get_user_permissions(user_id=logged_in_user['user_id'])
+
+    permissions = {
+        'user': user_permissions,
+        'for_search': Permission.MODERATE_RCIS,
+        'for_system_settings': Permissions.MODERATE_SYSTEM 
+    }
+
+    return render_template('dashboard/main.html',
+                           rcis=rcis,
+                           permissions=permission)
+
 
 
 @bp.route('/search', methods=['GET', 'POST'])
