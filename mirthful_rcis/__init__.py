@@ -120,11 +120,13 @@ def create_app(test_config=None):
     from mirthful_rcis.controllers import dashboard
     from mirthful_rcis.controllers import rci
     from mirthful_rcis.controllers import damage
+    from mirthful_rcis.controllers import settings
 
     app.register_blueprint(auth.bp)
     app.register_blueprint(dashboard.bp)
     app.register_blueprint(rci.bp)
     app.register_blueprint(damage.bp)
+    app.register_blueprint(settings.bp)
 
     return app
 

@@ -17,6 +17,19 @@
                 <div></div>
                 <span>NEW RCI</span>
             </a>
+            {% if display_search %}
+            <a class="reset-link component-picture-link" href="{{ url_for('dashboard.search') }}">
+                <div></div>
+                <span>SEARCH</span>
+            </a>
+            {% endif %}
+            {% if display_system_settings %}
+            <a class="reset-link component-picture-link" href="{{ url_for('settings.system_settings') }}">
+                <div></div>
+                <span>SYSTEM SETTINGS</span>
+            </a>
+            {% endif %}
+
     </section>
     <section>
         {% for rci in rcis %}

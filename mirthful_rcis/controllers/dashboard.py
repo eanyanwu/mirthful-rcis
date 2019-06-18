@@ -5,6 +5,10 @@ from mirthful_rcis.lib import (
 )
 
 from mirthful_rcis.lib.authentication import login_required
+from mirthful_rcis.lib.authorization import (
+    user_can,
+    Permission
+)
 
 from mirthful_rcis.lib.exceptions import (
     Unauthorized
@@ -51,15 +55,18 @@ def main():
     
     user_permissions = libuser.get_user_permissions(user_id=logged_in_user['user_id'])
 
-    permissions = {
-        'user': user_permissions,
-        'for_search': Permission.MODERATE_RCIS,
-        'for_system_settings': Permissions.MODERATE_SYSTEM 
-    }
+    display_search = user_can(permissions=Permission.MODERATE_RCIS,
+                              user=logged_in_user)
+
+    display_system_settings = user_can(permissions=Permission.MODERATE_SYSTEM,
+                                       user=logged_in_user)
+
+    
 
     return render_template('dashboard/main.html',
                            rcis=rcis,
-                           permissions=permission)
+                           display_search=display_search,
+                           display_system_settings=display_system_settings)
 
 
 
@@ -76,7 +83,8 @@ def search():
 
     search_string = request.form['search_string']
 
-    results = librci.search_rcis(search_string=search_string)
+    results = librci.search_rcis(search_string=search_string,
+                                 logged_in_user=g.user)
 
     return render_template('dashboard/search.html', 
                             search_string=search_string,

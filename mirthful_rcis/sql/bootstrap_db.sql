@@ -9,7 +9,7 @@ INSERT INTO roles (role, description, permissions)
 VALUES ('res_life_staff', 'Member of Residence Life Staff', 3);
 
 INSERT INTO roles (role, description, permissions)
-VALUES ('admin', 'Residence Life Director', 3);
+VALUES ('admin', 'Residence Life Director', 7);
 
 
 

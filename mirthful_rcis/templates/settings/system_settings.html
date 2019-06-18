@@ -1,0 +1,19 @@
+{% from 'macros/rci_card.html' import rci_card %}
+
+{% extends 'base.html' %}
+{% block title %}Rci System Settings{% endblock %}
+
+{% block css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='settings.css') }}" />
+{% endblock %}
+
+{% block body %}
+
+{% include "header.html" %}
+
+<main>
+    System Settings
+</main>
+
+
+{% endblock %}

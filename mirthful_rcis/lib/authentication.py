@@ -1,5 +1,9 @@
 from mirthful_rcis.dal import datastore
 from mirthful_rcis.lib.exceptions import Unauthorized, BadRequest
+from mirthful_rcis.lib.authorization import (
+    user_can,
+    Permission
+)
 
 import uuid
 from datetime import datetime
@@ -33,6 +37,26 @@ def login_required(func):
         return result
 
     return handle_authentication_check 
+
+
+def admin_required(func):
+    @wraps(func)
+    def handle_admin_permission_check(*args, **kwargs):
+        user = g.user 
+
+        if not user_can(permissions=Permission.MODERATE_SYSTEM,
+                        user=user):
+            return redirect(url_for('dashboard.main'))
+        else:
+            return func(*args, **kwargs)
+    
+    return handle_admin_permission_check
+
+
+        
+
+
+
 
 
 def get_session_user(session_id):
